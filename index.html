@@ -96,7 +96,7 @@
           👥 雙人對賽
         </button>
         <button id="btnMode1P" onclick="setGameMode('1P')" class="px-3 py-1.5 rounded-xl text-emerald-900 hover:bg-emerald-200/60 transition">
-          👤 單人闖關
+          👤 單人挑戰
         </button>
         <button id="btnModeRules" onclick="openRulesModal()" class="px-2.5 py-1.5 rounded-xl text-emerald-900 hover:bg-emerald-200/60 transition">
           📖 秘笈
@@ -140,7 +140,7 @@
       <div class="flex items-center justify-between mb-2 px-2">
         <div class="flex items-center gap-2">
           <span class="text-xs font-black text-emerald-900 bg-white/90 px-2.5 py-1 rounded-full border border-emerald-300 shadow-xs">
-            🌊 荷花池跳跳大競速 (終點 10 步)
+            🌊 跳跳小數點大賽 (終點 10 步)
           </span>
           <span class="text-[11px] font-bold text-slate-500 hidden md:inline">答對前進 1 步 🟢，答錯滑退 1 步 🔴</span>
         </div>
@@ -349,7 +349,7 @@
 
     <!-- 1-PLAYER SOLO EXPANDED VIEW BANNER (Only in 1P mode) -->
     <div id="soloGuidanceBanner" class="hidden mt-3 bg-amber-50 border-2 border-amber-300 rounded-2xl p-3 text-center text-xs font-bold text-amber-900 shadow-sm">
-      🎯 【單人闖關模式】：<span id="soloTimeText">3</span> 分鐘內盡全力跳滿 10 步登上領獎台！如果答錯青蛙會滑落 1 步喔！
+      🎯 【單人挑戰模式】：<span id="soloTimeText">3</span> 分鐘內盡全力跳滿 10 步登上領獎台！如果答錯會後退 1 步喔！
     </div>
   </main>
 
@@ -366,7 +366,7 @@
       
       <div class="space-y-3 text-xs sm:text-sm text-slate-700">
         <div class="p-3 bg-sky-50 rounded-2xl border-2 border-sky-200">
-          <h4 class="font-black text-sky-900 mb-1">秘訣一：除以整十整百（÷ 10, 100, 1000）</h4>
+          <h4 class="font-black text-sky-900 mb-1">秘訣一：除以÷ 10, 100, 1000</h4>
           <p class="leading-relaxed">
             平分給好多人，數值變小 $\rightarrow$ <strong>向左跳 ⬅</strong>！<br>
             • 除以 10 (1個0)：向左跳 1 位<br>
@@ -376,9 +376,9 @@
         </div>
 
         <div class="p-3 bg-amber-50 rounded-2xl border-2 border-amber-200">
-          <h4 class="font-black text-amber-900 mb-1">秘訣二：除以純小數（÷ 0.1, 0.01, 0.001）</h4>
+          <h4 class="font-black text-amber-900 mb-1">秘訣二：除以 0.1, 0.01, 0.001</h4>
           <p class="leading-relaxed">
-            除以純小數相當於乘以 10/100/1000，數值反向變大 $\rightarrow$ <strong>向右跳 ➡</strong>！<br>
+            相當於乘以 10/100/1000，數值反向變大 $\rightarrow$ <strong>向右跳 ➡</strong>！<br>
             • 除以 0.1 (一位小數)：向右跳 1 位<br>
             • 除以 0.01 (兩位小數)：向右跳 2 位<br>
             • 除以 0.001 (三位小數)：向右跳 3 位
@@ -762,7 +762,7 @@
         p1Combo = 0;
         p1Steps = Math.max(0, p1Steps - 1);
         fb.className = "absolute inset-x-3 bottom-3 p-3 rounded-2xl text-xs sm:text-sm font-black text-center shadow-lg bg-rose-500 text-white block";
-        fb.innerHTML = `💦 算錯囉！滑落後退 1 步！<br><span class="text-[11px] font-medium">正確答案是 ${p1Question.targetStr}（${p1Question.explanation}）</span>`;
+        fb.innerHTML = `💦 算錯囉！後退 1 步！<br><span class="text-[11px] font-medium">正確答案是 ${p1Question.targetStr}（${p1Question.explanation}）</span>`;
       }
 
       document.getElementById('p1Score').textContent = p1Score;
@@ -916,7 +916,7 @@
         p2Combo = 0;
         p2Steps = Math.max(0, p2Steps - 1);
         fb.className = "absolute inset-x-3 bottom-3 p-3 rounded-2xl text-xs sm:text-sm font-black text-center shadow-lg bg-rose-500 text-white block";
-        fb.innerHTML = `💦 算錯囉！滑落後退 1 步！<br><span class="text-[11px] font-medium">正確答案是 ${p2Question.targetStr}（${p2Question.explanation}）</span>`;
+        fb.innerHTML = `💦 算錯囉！後退 1 步！<br><span class="text-[11px] font-medium">正確答案是 ${p2Question.targetStr}（${p2Question.explanation}）</span>`;
       }
 
       document.getElementById('p2Score').textContent = p2Score;
@@ -982,7 +982,7 @@
       if (gameMode === '1P') {
         if (p1Steps >= MAX_STEPS) {
           icon.textContent = '👑';
-          title.textContent = '🎉 闖關成功！登上蓮花寶座！';
+          title.textContent = '🎉 闖關成功！登上跳跳樂高手寶座！';
           desc.textContent = `太厲害了！你成功跳滿 ${MAX_STEPS} 步到達終點，累計得分 ${p1Score} 分！`;
         } else {
           icon.textContent = '⏰';
@@ -994,25 +994,25 @@
         if (reason === 'P1_WIN') {
           icon.textContent = '🥇';
           title.textContent = '🟢 綠跳跳隊 率先登頂獲勝！';
-          desc.textContent = '恭喜選手 1 (綠跳跳) 率先跳上第 10 步終點金蓮花，奪得冠軍！';
+          desc.textContent = '恭喜選手 1 (綠跳跳) 率先跳到終點，奪得冠軍！';
         } else if (reason === 'P2_WIN') {
           icon.textContent = '🥇';
           title.textContent = '🔵 藍跳跳隊 率先登頂獲勝！';
-          desc.textContent = '恭喜選手 2 (藍跳跳) 率先跳上第 10 步終點金蓮花，奪得冠軍！';
+          desc.textContent = '恭喜選手 2 (藍跳跳) 率先跳到終點，奪得冠軍！';
         } else {
           // Time up
           if (p1Steps > p2Steps) {
             icon.textContent = '🏆';
-            title.textContent = '🟢 綠跳跳隊 依前進步數獲勝！';
+            title.textContent = '🟢 綠跳跳隊 前進步數較多獲勝！';
             desc.textContent = `${currentMinutes} 分鐘時間到！綠跳跳以 ${p1Steps} 步領先藍跳跳的 ${p2Steps} 步！`;
           } else if (p2Steps > p1Steps) {
             icon.textContent = '🏆';
-            title.textContent = '🔵 藍跳跳隊 依前進步數獲勝！';
+            title.textContent = '🔵 藍跳跳隊 前進步數較多獲勝！';
             desc.textContent = `${currentMinutes} 分鐘時間到！藍跳跳以 ${p2Steps} 步領先綠跳跳的 ${p1Steps} 步！`;
           } else {
             icon.textContent = '🤝';
-            title.textContent = '平分秋色！雙蛙並列冠軍！';
-            desc.textContent = `${currentMinutes} 分鐘時間到！兩隊均前進了 ${p1Steps} 步，實力旗鼓相當！`;
+            title.textContent = '平分秋色！藍綠跳跳隊並列冠軍！';
+            desc.textContent = `${currentMinutes} 分鐘時間到！兩隊均前進了 ${p1Steps} 步，實力旗鼓相當，下次繼續努力！`;
           }
         }
       }
@@ -1067,7 +1067,7 @@
         p2TrackRow.classList.add('hidden');
         resP2Col.classList.add('hidden');
         soloBanner.classList.remove('hidden');
-        modeTag.textContent = "單人闖關 🎯";
+        modeTag.textContent = "單人挑戰 🎯";
       }
 
       restartMatch();
