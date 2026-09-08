@@ -2,15 +2,19 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>小數點跳跳樂 - 歡樂校園數學冒險</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>小數點跳跳樂 - 校園青蛙跳跳大對決</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;600;700;900&family=JetBrains+Mono:wght@600;800&family=Gaegu:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Noto+Sans+TC:wght@500;700;900&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
   
   <style>
+    * {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
     body {
       font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
       user-select: none;
@@ -19,564 +23,402 @@
     .font-mono-num {
       font-family: 'JetBrains Mono', monospace;
     }
-    .font-handwriting {
-      font-family: 'Gaegu', cursive, 'Noto Sans TC';
+
+    /* Pond Water & Notebook Grid pattern */
+    .bg-campus-pond {
+      background-color: #f0fdf4;
+      background-image: 
+        radial-gradient(#bbf7d0 1.5px, transparent 1.5px), 
+        radial-gradient(#bae6fd 1.5px, #f0fdf4 1.5px);
+      background-size: 28px 28px;
+      background-position: 0 0, 14px 14px;
     }
 
-    /* Cheerful bouncing ball animation for the decimal dot */
+    /* Frog Jump Animation */
+    @keyframes frog-hop {
+      0% { transform: translateY(0) scale(1, 1); }
+      35% { transform: translateY(-18px) scale(0.9, 1.15) rotate(-3deg); }
+      70% { transform: translateY(-6px) scale(1.1, 0.95); }
+      100% { transform: translateY(0) scale(1, 1); }
+    }
+    .animate-frog-hop {
+      animation: frog-hop 0.45s ease-out;
+    }
+
+    /* Bouncing decimal ball */
     @keyframes joyful-bounce {
-      0%, 100% {
-        transform: translateY(0) scale(1);
-        filter: drop-shadow(0 6px 12px rgba(244, 63, 94, 0.45));
-      }
-      50% {
-        transform: translateY(-8px) scale(1.15);
-        filter: drop-shadow(0 14px 18px rgba(244, 63, 94, 0.6));
-      }
+      0%, 100% { transform: translateY(0) scale(1); filter: drop-shadow(0 4px 6px rgba(239, 68, 68, 0.4)); }
+      50% { transform: translateY(-7px) scale(1.15); filter: drop-shadow(0 10px 12px rgba(239, 68, 68, 0.55)); }
     }
     .animate-bouncy-dot {
-      animation: joyful-bounce 1.2s infinite ease-in-out;
+      animation: joyful-bounce 1s infinite ease-in-out;
     }
 
-    /* Gentle floating school icons */
-    @keyframes float-gentle {
-      0%, 100% { transform: translateY(0px) rotate(0deg); }
-      50% { transform: translateY(-6px) rotate(3deg); }
+    /* Water wave pulse */
+    @keyframes water-ripple {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.05); opacity: 0.4; }
+      100% { transform: scale(0.95); opacity: 0.8; }
     }
-    .animate-float-school {
-      animation: float-gentle 3.5s ease-in-out infinite;
-    }
-
-    /* Notebook grid pattern background */
-    .bg-school-grid {
-      background-color: #fffbeb;
-      background-image: 
-        radial-gradient(#fde68a 1.2px, transparent 1.2px), 
-        radial-gradient(#bae6fd 1.2px, #fffbeb 1.2px);
-      background-size: 32px 32px;
-      background-position: 0 0, 16px 16px;
+    .animate-ripple {
+      animation: water-ripple 3s infinite ease-in-out;
     }
 
-    /* Custom scrollbar in sunny school colors */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #fef3c7;
-      border-radius: 9999px;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #f59e0b;
-      border-radius: 9999px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #d97706;
-    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: #10b981; border-radius: 9999px; }
   </style>
 </head>
-<body class="bg-school-grid text-slate-800 min-h-screen flex flex-col justify-between overflow-x-hidden relative selection:bg-amber-300 selection:text-amber-900">
-  
-  <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
-    <div class="absolute -top-16 -left-16 w-80 h-80 bg-amber-200/45 rounded-full blur-3xl"></div>
-    <div class="absolute top-1/3 -right-20 w-96 h-96 bg-sky-200/55 rounded-full blur-3xl"></div>
-    <div class="absolute -bottom-16 left-1/4 w-80 h-80 bg-emerald-200/40 rounded-full blur-3xl"></div>
-    <!-- Floating School Emoticons in Background -->
-    <div class="absolute top-20 right-[12%] text-3xl opacity-25 select-none animate-float-school">🎈</div>
-    <div class="absolute bottom-24 left-[8%] text-3xl opacity-25 select-none animate-float-school" style="animation-delay: 1.5s;">✏️</div>
-    <div class="absolute top-1/2 left-[4%] text-3xl opacity-20 select-none animate-float-school" style="animation-delay: 2.2s;">📐</div>
-    <div class="absolute top-36 left-[18%] text-3xl opacity-25 select-none animate-float-school" style="animation-delay: 0.8s;">⭐</div>
-  </div>
+<body class="bg-campus-pond text-slate-800 min-h-screen flex flex-col justify-between overflow-x-hidden select-none">
 
-  <div class="relative z-10 flex flex-col flex-grow max-w-5xl mx-auto w-full px-3 py-4 sm:px-6 sm:py-6">
-    
-    <!-- Cheerful School Header Bar -->
-    <header class="flex flex-wrap items-center justify-between gap-3 bg-white/95 backdrop-blur-md border-2 border-amber-200/90 px-5 py-3.5 rounded-3xl shadow-lg shadow-amber-100/70">
-      <div class="flex items-center gap-3.5">
-        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-400 via-orange-400 to-rose-400 flex items-center justify-center text-2xl shadow-md shadow-orange-300/50 animate-float-school">
-          🎒
+  <header class="w-full bg-white/95 backdrop-blur border-b-2 border-emerald-200 px-3 py-2 sm:px-6 sm:py-2.5 shadow-sm sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-2">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-2">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-400 to-teal-500 flex items-center justify-center text-2xl shadow-md shadow-emerald-200">
+          🐸
         </div>
         <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-xl sm:text-2xl font-black tracking-wide text-amber-900 drop-shadow-sm">
-              小數點跳跳樂
-            </h1>
-            <span class="bg-rose-100 text-rose-600 text-xs font-bold px-2 py-0.5 rounded-full border border-rose-200">
-              校園版 🏫
+          <div class="flex items-center gap-1.5">
+            <h1 class="text-base sm:text-lg font-black text-emerald-950 tracking-tight">小數點跳跳樂</h1>
+            <span id="modeTag" class="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-300">
+              雙人對賽 🏁
             </span>
           </div>
-          <p class="text-xs text-slate-500 font-medium mt-0.5">
-            輕鬆掌握除以 10/100/1000（向左跳）與 0.1/0.01/0.001（向右跳）的魔法！
-          </p>
+          <p class="text-[11px] text-slate-500 hidden sm:block font-medium">除以 10ⁿ 向左移 ⬅ | 除以 0.1ⁿ 向右移 ➡</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-1.5 bg-amber-100/80 p-1.5 rounded-2xl border border-amber-200 text-xs sm:text-sm font-bold">
-        <button id="tabChallenge" onclick="switchMode('challenge')" class="px-3.5 py-1.5 rounded-xl transition-all duration-200 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm hover:opacity-95">
-          🎯 跳躍闖關
+      <!-- Mode Switcher Tabs -->
+      <div class="flex items-center bg-emerald-100/90 p-1 rounded-2xl border border-emerald-300 text-xs font-black shadow-inner">
+        <button id="btnMode2P" onclick="setGameMode('2P')" class="px-3 py-1.5 rounded-xl bg-white text-emerald-800 shadow-sm transition">
+          👥 雙人對賽
         </button>
-        <button id="tabSandbox" onclick="switchMode('sandbox')" class="px-3.5 py-1.5 rounded-xl transition-all duration-200 text-amber-800 hover:bg-amber-200/70">
-          🔬 歡樂實驗室
+        <button id="btnMode1P" onclick="setGameMode('1P')" class="px-3 py-1.5 rounded-xl text-emerald-900 hover:bg-emerald-200/60 transition">
+          👤 單人闖關
         </button>
-        <button id="tabRules" onclick="switchMode('rules')" class="px-3.5 py-1.5 rounded-xl transition-all duration-200 text-amber-800 hover:bg-amber-200/70">
-          📜 口訣筆記本
+        <button id="btnModeRules" onclick="openRulesModal()" class="px-2.5 py-1.5 rounded-xl text-emerald-900 hover:bg-emerald-200/60 transition">
+          📖 秘笈
         </button>
       </div>
 
-      <!-- Controls & Sound -->
+      <!-- 3-Minute Battle Timer & Function Buttons -->
       <div class="flex items-center gap-2">
-        <button id="soundToggleBtn" onclick="toggleAudio()" class="w-10 h-10 flex items-center justify-center rounded-2xl bg-amber-100 hover:bg-amber-200 border-2 border-amber-200 text-amber-900 transition shadow-sm active:scale-95" title="音效切換">
-          <span id="soundIcon" class="text-lg">🔔</span>
+        <div id="timerContainer" class="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-rose-50 border-2 border-rose-300 shadow-sm">
+          <span class="text-rose-500 text-sm animate-pulse">⏳</span>
+          <span id="timerText" class="font-mono-num font-black text-rose-600 text-sm sm:text-base">03:00</span>
+        </div>
+
+        <button onclick="toggleAudio()" class="w-9 h-9 rounded-xl bg-amber-100 hover:bg-amber-200 border border-amber-300 flex items-center justify-center text-base active:scale-95 transition" title="音效">
+          <span id="soundIcon">🔔</span>
+        </button>
+        
+        <button onclick="toggleFullScreen()" class="w-9 h-9 rounded-xl bg-sky-100 hover:bg-sky-200 border border-sky-300 flex items-center justify-center text-sm active:scale-95 transition" title="電子白板全螢幕">
+          ⛶
         </button>
       </div>
-    </header>
 
-    <main class="mt-4 flex-grow flex flex-col">
+    </div>
+  </header>
+
+  <section class="max-w-7xl mx-auto w-full px-2 pt-2 sm:px-4">
+    <div class="bg-gradient-to-b from-sky-100/90 via-emerald-50 to-teal-50 border-2 border-emerald-300 rounded-3xl p-3 sm:p-4 shadow-md relative overflow-hidden">
       
-      <!-- =========================================================
-           MODE 1: CHALLENGE ARENA
-           ========================================================= -->
-      <section id="challengeView" class="flex flex-col gap-4">
+      <div class="flex items-center justify-between mb-2 px-2">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-black text-emerald-900 bg-white/90 px-2.5 py-1 rounded-full border border-emerald-300 shadow-xs">
+            🌊 荷花池跳跳大競速 (終點 10 步)
+          </span>
+          <span class="text-[11px] font-bold text-slate-500 hidden md:inline">答對前進 1 步 🟢，答錯滑退 1 步 🔴</span>
+        </div>
+        <div class="text-xs font-black text-emerald-800 flex items-center gap-1">
+          <span>目標：</span><span class="text-amber-600">🏆 金蓮花王冠</span>
+        </div>
+      </div>
+
+      <!-- Frog Track 1 (Player 1 - Green Frog) -->
+      <div class="relative py-2 border-b border-emerald-200/80">
+        <div class="flex items-center justify-between text-[11px] font-black text-emerald-800 mb-1 px-1">
+          <span class="flex items-center gap-1">🟢 選手 1 (綠跳跳)</span>
+          <span id="p1StepLabel" class="font-mono-num font-bold text-emerald-700">第 0 / 10 步</span>
+        </div>
         
-        <!-- Cheerful Dashboard Counters (Score, Combo, Level, Hearts) -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div class="bg-white/90 border-2 border-sky-100 rounded-2xl p-3 flex items-center gap-3 shadow-md shadow-sky-100/50">
-            <div class="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center text-2xl">🌱</div>
-            <div>
-              <div class="text-[11px] font-bold text-sky-600">當前關卡</div>
-              <div id="diffDisplay" class="text-xs sm:text-sm font-black text-slate-800 truncate">階段一：除以整十整百</div>
-            </div>
-          </div>
-
-          <div class="bg-white/90 border-2 border-amber-100 rounded-2xl p-3 flex items-center gap-3 shadow-md shadow-amber-100/50">
-            <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-2xl">🔥</div>
-            <div>
-              <div class="text-[11px] font-bold text-amber-600">答對連擊</div>
-              <div id="comboDisplay" class="text-sm font-black text-amber-600">0 連擊</div>
-            </div>
-          </div>
-
-          <div class="bg-white/90 border-2 border-emerald-100 rounded-2xl p-3 flex items-center gap-3 shadow-md shadow-emerald-100/50">
-            <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-2xl">⭐</div>
-            <div>
-              <div class="text-[11px] font-bold text-emerald-600">集星星得分</div>
-              <div id="scoreDisplay" class="text-sm font-black text-emerald-700">0 分</div>
-            </div>
-          </div>
-
-          <div class="bg-white/90 border-2 border-rose-100 rounded-2xl p-3 flex items-center gap-3 shadow-md shadow-rose-100/50">
-            <div class="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center text-2xl">❤️</div>
-            <div>
-              <div class="text-[11px] font-bold text-rose-500">挑戰愛心</div>
-              <div id="livesDisplay" class="text-sm font-black text-rose-500 tracking-wider">❤️❤️❤️</div>
-            </div>
+        <!-- Track Steps -->
+        <div class="relative flex items-center justify-between gap-1 px-1 overflow-x-auto py-1">
+          <div class="absolute left-0 right-0 top-1/2 h-1.5 bg-emerald-200 -z-0 rounded-full"></div>
+          <!-- 11 Lily pads (0 to 10) -->
+          <div id="p1TrackPads" class="flex items-center justify-between w-full relative z-10">
+            <!-- Injected via JS -->
           </div>
         </div>
+      </div>
 
-        <div class="bg-white border-4 border-amber-200/90 rounded-3xl p-5 sm:p-7 shadow-xl shadow-amber-200/40 relative overflow-hidden">
-          
-          <!-- Card Header & Hint Button -->
-          <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-            <div class="inline-flex items-center gap-2 px-3.5 py-1.2 rounded-full bg-amber-100 border border-amber-300 text-amber-800 text-xs font-bold shadow-sm">
-              <span class="w-2.5 h-2.5 rounded-full bg-orange-500 animate-ping"></span>
-              課堂隨堂題 第 <span id="qIndex" class="text-orange-600 font-black">1</span> / 10 題
-            </div>
-            
-            <button onclick="toggleHintModal()" class="px-3 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-300 text-xs font-bold text-amber-800 flex items-center gap-1.5 transition">
-              <span>💡</span> 偷看課本口訣秘笈
-            </button>
-          </div>
-
-          <!-- The Arithmetic Expression on a friendly chalkboard badge -->
-          <div class="text-center my-3 sm:my-5">
-            <div class="text-xs sm:text-sm text-slate-500 font-bold mb-1.5">✍️ 請幫小數點找到正確跳躍位置：</div>
-            <div class="inline-flex items-center justify-center gap-3 sm:gap-4 bg-gradient-to-r from-amber-50 via-sky-50 to-amber-50 px-6 py-3 rounded-2xl border-2 border-amber-200 shadow-inner text-3xl sm:text-5xl font-mono-num font-black">
-              <span id="qOriginNumber" class="text-amber-800 drop-shadow-sm">345.6</span>
-              <span class="text-rose-500 font-bold">÷</span>
-              <span id="qDivisor" class="text-sky-700 bg-sky-100/90 px-3.5 py-0.5 rounded-xl border border-sky-300 shadow-sm">100</span>
-              <span class="text-slate-400">=</span>
-              <span class="text-orange-500 text-3xl sm:text-4xl animate-pulse">？</span>
-            </div>
-          </div>
-
-          <div class="mt-6 bg-gradient-to-b from-sky-50/70 to-amber-50/70 border-2 border-dashed border-sky-300 rounded-3xl p-4 sm:p-6 shadow-inner flex flex-col items-center">
-            
-            <div class="w-full flex items-center justify-between text-xs font-bold text-slate-500 mb-2 px-2">
-              <span class="flex items-center gap-1 text-sky-700 bg-sky-100 px-2 py-0.5 rounded-lg border border-sky-200">
-                ⬅ 向左跳（數值變小）
-              </span>
-              <span class="hidden sm:inline font-bold text-amber-900">
-                👆 點擊下方按鈕或直接點擊小圓點，讓小數點跳躍！
-              </span>
-              <span class="flex items-center gap-1 text-orange-700 bg-orange-100 px-2 py-0.5 rounded-lg border border-orange-200">
-                向右跳（數值變大） ➡
-              </span>
-            </div>
-
-            <!-- The Tape Grid for Digits and Slots -->
-            <div id="digitTapeWrapper" class="w-full overflow-x-auto py-3 flex justify-center items-center">
-              <div id="digitTape" class="flex items-center justify-center gap-1 sm:gap-2 px-4 py-2 font-mono-num text-2xl sm:text-4xl">
-                <!-- Dynamically injected campus digit cards -->
-              </div>
-            </div>
-
-            <div class="flex flex-wrap items-center justify-center gap-3 mt-3 w-full max-w-md">
-              <button onclick="stepDecimal(-1)" class="flex-1 py-3 px-4 rounded-2xl bg-white hover:bg-sky-50 active:scale-95 border-2 border-sky-300 text-sky-700 font-black text-sm flex items-center justify-center gap-2 shadow-sm transition">
-                <span class="text-lg">⬅</span> 向左移 1 位
-              </button>
-              
-              <button onclick="resetCurrentNumber()" class="py-3 px-3.5 rounded-2xl bg-white hover:bg-amber-100 active:scale-95 border-2 border-amber-300 text-amber-800 text-xs font-black transition shadow-sm" title="重置回題目原本位置">
-                🔄 回原位
-              </button>
-              
-              <button onclick="stepDecimal(1)" class="flex-1 py-3 px-4 rounded-2xl bg-white hover:bg-orange-50 active:scale-95 border-2 border-orange-300 text-orange-700 font-black text-sm flex items-center justify-center gap-2 shadow-sm transition">
-                向右移 1 位 <span class="text-lg">➡</span>
-              </button>
-            </div>
-
-            <!-- Current Jump State Hint -->
-            <div id="jumpDeltaStatus" class="text-xs text-slate-600 mt-2.5 font-bold">
-              當前小數點移動：<span class="text-amber-800 bg-white px-2 py-0.5 rounded-md border border-amber-200">原地未動 (0 位)</span>
-            </div>
-          </div>
-
-          <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t-2 border-dashed border-amber-100">
-            <div class="text-center sm:text-left">
-              <div class="text-xs font-bold text-slate-500">當前擺出的小數結果：</div>
-              <div id="currentValueDisplay" class="text-3xl sm:text-4xl font-mono-num font-black text-amber-900 tracking-wider">
-                345.6
-              </div>
-            </div>
-
-            <div class="flex items-center gap-3 w-full sm:w-auto">
-              <button id="confirmAnswerBtn" onclick="submitAnswer()" class="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white font-black text-base tracking-wider shadow-lg shadow-emerald-200 active:scale-95 transition">
-                🎒 寫入作業簿 (送出解答)
-              </button>
-            </div>
-          </div>
-
-          <!-- In-card Feedback notification -->
-          <div id="feedbackBox" class="hidden mt-4 p-4 rounded-2xl text-sm font-semibold transition-all duration-300"></div>
-
+      <!-- Frog Track 2 (Player 2 - Blue Frog, shown in 2P mode) -->
+      <div id="p2TrackRow" class="relative py-2">
+        <div class="flex items-center justify-between text-[11px] font-black text-sky-800 mb-1 px-1">
+          <span class="flex items-center gap-1">🔵 選手 2 (藍跳跳)</span>
+          <span id="p2StepLabel" class="font-mono-num font-bold text-sky-700">第 0 / 10 步</span>
         </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          <div class="bg-sky-50 border-2 border-sky-200 rounded-2xl p-4 flex items-center gap-3.5 shadow-sm">
-            <div class="w-10 h-10 rounded-xl bg-sky-200/90 text-sky-800 flex items-center justify-center font-black text-sm">÷ 10ⁿ</div>
-            <div class="text-xs text-slate-700 leading-relaxed">
-              <strong class="text-sky-800 font-bold">除以 10, 100, 1000</strong>：平分變小！<br>
-              有幾個 0 就<span class="text-sky-700 font-black bg-sky-100 px-1 py-0.5 rounded border border-sky-200">「向左跳幾位 ⬅」</span>。
-            </div>
-          </div>
-          <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 flex items-center gap-3.5 shadow-sm">
-            <div class="w-10 h-10 rounded-xl bg-amber-200/90 text-amber-800 flex items-center justify-center font-black text-sm">÷ 0.1ⁿ</div>
-            <div class="text-xs text-slate-700 leading-relaxed">
-              <strong class="text-amber-800 font-bold">除以 0.1, 0.01, 0.001</strong>：反向乘大！<br>
-              幾位小數就<span class="text-orange-700 font-black bg-orange-100 px-1 py-0.5 rounded border border-orange-200">「向右跳幾位 ➡」</span>。
-            </div>
-          </div>
-        </div>
-
-      </section>
-
-      <!-- =========================================================
-           MODE 2: SANDBOX LABORATORY (歡樂實驗室)
-           ========================================================= -->
-      <section id="sandboxView" class="hidden flex-col gap-4">
         
-        <div class="bg-white border-4 border-emerald-200 rounded-3xl p-6 sm:p-8 shadow-xl shadow-emerald-100/60">
-          <div class="text-center max-w-xl mx-auto mb-6">
-            <div class="inline-block p-3 bg-emerald-100 rounded-2xl text-3xl mb-2">🔬</div>
-            <h2 class="text-2xl font-black text-emerald-900 mb-1">
-              小數點趣味實驗室
-            </h2>
-            <p class="text-xs sm:text-sm text-slate-500 font-medium">
-              輸入你喜歡的數字，按按看不同的除法按鈕，親眼看看小數點是怎麼蹦蹦跳跳的！
-            </p>
+        <div class="relative flex items-center justify-between gap-1 px-1 overflow-x-auto py-1">
+          <div class="absolute left-0 right-0 top-1/2 h-1.5 bg-sky-200 -z-0 rounded-full"></div>
+          <div id="p2TrackPads" class="flex items-center justify-between w-full relative z-10">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <main class="flex-grow max-w-7xl mx-auto w-full px-2 py-3 sm:px-4 flex flex-col justify-center">
+    
+    <!-- 2-PLAYER SPLIT ARENA -->
+    <div id="arena2P" class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 flex-grow items-stretch">
+      
+      <!-- ================= PLAYER 1 CONTROLS (LEFT TEAM) ================= -->
+      <div class="bg-white/95 border-4 border-emerald-300 rounded-3xl p-3 sm:p-5 shadow-lg shadow-emerald-100 flex flex-col justify-between relative overflow-hidden">
+        <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-emerald-400 to-teal-500"></div>
+        
+        <!-- P1 Header status -->
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-800 font-black text-sm flex items-center justify-center border border-emerald-300">P1</span>
+            <span class="font-black text-emerald-950 text-sm sm:text-base">綠跳跳隊</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
+              連擊: <strong id="p1Combo" class="font-mono-num text-orange-600">0</strong>
+            </span>
+            <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
+              得分: <strong id="p1Score" class="font-mono-num text-emerald-700">0</strong>
+            </span>
+          </div>
+        </div>
+
+        <!-- P1 Arithmetic Expression -->
+        <div class="bg-gradient-to-b from-emerald-50 to-white border-2 border-emerald-200 rounded-2xl py-3 px-2 text-center my-1.5 shadow-inner">
+          <div class="text-[11px] font-bold text-emerald-800 mb-1">【P1 題目】小數點該往哪裡跳？</div>
+          <div class="inline-flex items-center justify-center gap-2 sm:gap-3 font-mono-num font-black text-2xl sm:text-4xl text-slate-800">
+            <span id="p1BaseNum" class="text-emerald-900">45.8</span>
+            <span class="text-rose-500">÷</span>
+            <span id="p1Divisor" class="text-sky-700 bg-sky-100 px-2.5 py-0.5 rounded-xl border border-sky-300 text-xl sm:text-3xl">100</span>
+            <span class="text-slate-400">=</span>
+            <span class="text-amber-500 text-2xl sm:text-3xl animate-pulse">？</span>
+          </div>
+        </div>
+
+        <!-- P1 Digit Reel interactive bar -->
+        <div class="bg-emerald-50/70 border-2 border-dashed border-emerald-300 rounded-2xl p-2.5 sm:p-3 my-1 flex flex-col items-center">
+          <div class="w-full flex items-center justify-between text-[11px] font-black text-slate-600 mb-1">
+            <span class="text-sky-700 bg-sky-100 px-2 py-0.5 rounded-md">⬅ 向左（縮小）</span>
+            <span id="p1ShiftLabel" class="text-emerald-800 font-bold">小數點未移動</span>
+            <span class="text-orange-700 bg-orange-100 px-2 py-0.5 rounded-md">向右（放大） ➡</span>
           </div>
 
-          <!-- Input Custom Number -->
-          <div class="max-w-md mx-auto mb-7">
-            <label class="block text-xs font-black text-slate-600 mb-2 text-center">
-              ✏️ 請輸入初始數字（例：45.8、7、0.25、120）：
-            </label>
-            <div class="flex gap-2">
-              <input id="customNumberInput" type="number" step="any" value="45.8" class="flex-1 bg-amber-50/60 border-2 border-amber-300 rounded-2xl px-4 py-3 text-xl font-mono-num font-black text-center text-amber-900 focus:outline-none focus:border-emerald-500 shadow-inner">
-              <button onclick="setSandboxFromInput()" class="px-6 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-sm shadow-md shadow-emerald-200 active:scale-95 transition">
-                載入數值
-              </button>
-            </div>
-          </div>
-
-          <!-- Divisor Operator Launchers -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto mb-6">
-            <!-- Left shift group -->
-            <div class="bg-sky-50/80 border-2 border-sky-200 rounded-2xl p-4">
-              <div class="text-xs font-black text-sky-800 mb-2.5 flex items-center justify-between">
-                <span>◀ 小數點向左跳（數字變小）</span>
-                <span class="text-[10px] bg-sky-200 text-sky-900 px-2 py-0.5 rounded-md font-bold">除以整十整百</span>
-              </div>
-              <div class="grid grid-cols-3 gap-2">
-                <button onclick="runSandboxOperation(10)" class="py-2.5 rounded-xl bg-white hover:bg-sky-100/70 border-2 border-sky-300 text-sky-800 font-black font-mono-num active:scale-95 transition shadow-sm">
-                  ÷ 10<br><span class="text-[10px] text-slate-500 font-sans">左跳 1 格</span>
-                </button>
-                <button onclick="runSandboxOperation(100)" class="py-2.5 rounded-xl bg-white hover:bg-sky-100/70 border-2 border-sky-300 text-sky-800 font-black font-mono-num active:scale-95 transition shadow-sm">
-                  ÷ 100<br><span class="text-[10px] text-slate-500 font-sans">左跳 2 格</span>
-                </button>
-                <button onclick="runSandboxOperation(1000)" class="py-2.5 rounded-xl bg-white hover:bg-sky-100/70 border-2 border-sky-300 text-sky-800 font-black font-mono-num active:scale-95 transition shadow-sm">
-                  ÷ 1000<br><span class="text-[10px] text-slate-500 font-sans">左跳 3 格</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Right shift group -->
-            <div class="bg-amber-50/80 border-2 border-amber-200 rounded-2xl p-4">
-              <div class="text-xs font-black text-amber-800 mb-2.5 flex items-center justify-between">
-                <span>小數點向右跳（數字變大） ▶</span>
-                <span class="text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded-md font-bold">除以純小數</span>
-              </div>
-              <div class="grid grid-cols-3 gap-2">
-                <button onclick="runSandboxOperation(0.1)" class="py-2.5 rounded-xl bg-white hover:bg-amber-100/70 border-2 border-amber-300 text-amber-800 font-black font-mono-num active:scale-95 transition shadow-sm">
-                  ÷ 0.1<br><span class="text-[10px] text-slate-500 font-sans">右跳 1 格</span>
-                </button>
-                <button onclick="runSandboxOperation(0.01)" class="py-2.5 rounded-xl bg-white hover:bg-amber-100/70 border-2 border-amber-300 text-amber-800 font-black font-mono-num active:scale-95 transition shadow-sm">
-                  ÷ 0.01<br><span class="text-[10px] text-slate-500 font-sans">右跳 2 格</span>
-                </button>
-                <button onclick="runSandboxOperation(0.001)" class="py-2.5 rounded-xl bg-white hover:bg-amber-100/70 border-2 border-amber-300 text-amber-800 font-black font-mono-num active:scale-95 transition shadow-sm">
-                  ÷ 0.001<br><span class="text-[10px] text-slate-500 font-sans">右跳 3 格</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-gradient-to-r from-amber-50 via-white to-sky-50 border-2 border-amber-200 rounded-2xl p-6 text-center shadow-inner">
-            <div class="text-xs font-bold text-slate-500 mb-2">動態跳躍軌道演示板</div>
-            <div id="sandboxAnimStage" class="py-4 flex items-center justify-center font-mono-num text-3xl sm:text-5xl font-black min-h-[90px] overflow-x-auto text-slate-800">
+          <div class="w-full overflow-x-auto py-2 flex justify-center">
+            <div id="p1DigitTape" class="flex items-center gap-1 font-mono-num text-xl sm:text-3xl">
               <!-- Dynamically populated -->
             </div>
-            <div id="sandboxExplanation" class="text-xs sm:text-sm font-bold text-emerald-800 mt-2 p-3 bg-white/90 border border-emerald-200 rounded-xl inline-block max-w-xl shadow-sm">
-              💡 點擊上方的按鈕，體驗小數點躍遷過程！
+          </div>
+
+          <!-- P1 Move Action Buttons (Extra large for iPad touch) -->
+          <div class="flex items-center justify-center gap-2 mt-2 w-full">
+            <button onclick="shiftP1Decimal(-1)" class="flex-1 py-3 sm:py-3.5 px-3 rounded-2xl bg-white hover:bg-sky-50 active:scale-95 border-2 border-sky-300 text-sky-800 font-black text-sm sm:text-base flex items-center justify-center gap-1 shadow-sm">
+              <span>⬅</span> 向左跳
+            </button>
+            <button onclick="resetP1Decimal()" class="py-3 sm:py-3.5 px-3 rounded-2xl bg-white hover:bg-amber-50 active:scale-95 border-2 border-amber-300 text-amber-800 font-black text-xs sm:text-sm shadow-sm" title="重置回原位">
+              🔄 原位
+            </button>
+            <button onclick="shiftP1Decimal(1)" class="flex-1 py-3 sm:py-3.5 px-3 rounded-2xl bg-white hover:bg-orange-50 active:scale-95 border-2 border-orange-300 text-orange-800 font-black text-sm sm:text-base flex items-center justify-center gap-1 shadow-sm">
+              向右跳 <span>➡</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- P1 Bottom Result & Confirm Button -->
+        <div class="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-emerald-100">
+          <div>
+            <div class="text-[11px] font-bold text-slate-500">當前擺放答案：</div>
+            <div id="p1ValueDisplay" class="text-2xl sm:text-3xl font-mono-num font-black text-emerald-950">
+              45.8
             </div>
           </div>
 
+          <button id="p1SubmitBtn" onclick="submitP1Answer()" class="px-6 sm:px-8 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 active:scale-95 text-white font-black text-base tracking-wider shadow-lg shadow-emerald-200 transition">
+            🐸 送出答案！
+          </button>
         </div>
 
-      </section>
+        <!-- P1 Toast Feedback -->
+        <div id="p1Feedback" class="hidden absolute inset-x-3 bottom-3 p-3 rounded-2xl text-xs sm:text-sm font-black text-center shadow-lg transition-all z-20"></div>
+      </div>
 
-      <!-- =========================================================
-           MODE 3: RULES NOTEBOOK (口訣筆記本)
-           ========================================================= -->
-      <section id="rulesView" class="hidden flex-col gap-4">
+      <!-- ================= PLAYER 2 CONTROLS (RIGHT TEAM) ================= -->
+      <div id="p2Box" class="bg-white/95 border-4 border-sky-300 rounded-3xl p-3 sm:p-5 shadow-lg shadow-sky-100 flex flex-col justify-between relative overflow-hidden">
+        <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-sky-400 to-indigo-500"></div>
         
-        <div class="bg-white border-4 border-amber-200 rounded-3xl p-6 sm:p-8 shadow-xl shadow-amber-100/70">
-          <div class="text-center max-w-2xl mx-auto mb-6">
-            <div class="inline-block p-3 bg-amber-100 rounded-2xl text-3xl mb-2">📖</div>
-            <h2 class="text-2xl font-black text-amber-900 mb-1">
-              小數點移動魔法口訣手冊
-            </h2>
-            <p class="text-xs sm:text-sm text-slate-500 font-medium">
-              只要掌握「除大數變小往左、除純小數反大往右」的原則，考試算術滿分不用愁！
-            </p>
-          </div>
-
-          <!-- Two Big Rule Note Cards -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-5 my-4">
-            
-            <!-- Rule Card 1 -->
-            <div class="bg-sky-50/70 border-2 border-sky-300 rounded-2xl p-5 relative">
-              <div class="w-10 h-10 rounded-xl bg-sky-200 text-sky-800 flex items-center justify-center text-xl font-bold mb-3">
-                ⬅
-              </div>
-              <h3 class="text-base font-black text-sky-900 mb-1.5">秘訣一：除以 10, 100, 1000</h3>
-              <p class="text-xs text-slate-600 mb-3 leading-relaxed">
-                把東西平分給很多人，每人分到的<strong>數值會變小</strong>！
-              </p>
-              <div class="bg-white rounded-xl p-3.5 border border-sky-200 space-y-2 text-xs font-mono-num shadow-sm">
-                <div class="flex justify-between items-center text-slate-700">
-                  <span class="font-bold text-sky-800">÷ 10 (1 個 0)</span>
-                  <span class="font-sans font-black text-sky-600">向左跳 1 位</span>
-                </div>
-                <div class="flex justify-between items-center text-slate-700">
-                  <span class="font-bold text-sky-800">÷ 100 (2 個 0)</span>
-                  <span class="font-sans font-black text-sky-600">向左跳 2 位</span>
-                </div>
-                <div class="flex justify-between items-center text-slate-700">
-                  <span class="font-bold text-sky-800">÷ 1000 (3 個 0)</span>
-                  <span class="font-sans font-black text-sky-600">向左跳 3 位</span>
-                </div>
-              </div>
-              <div class="mt-3 text-xs text-sky-900 bg-sky-100/90 p-2.5 rounded-xl border border-sky-200">
-                🔔 <strong class="text-sky-800">小提醒：</strong>向左跳如果位數不夠，記得在整數部分補 <strong>0</strong>（例：5.2 ÷ 100 = 0.052）。
-              </div>
-            </div>
-
-            <!-- Rule Card 2 -->
-            <div class="bg-amber-50/70 border-2 border-amber-300 rounded-2xl p-5 relative">
-              <div class="w-10 h-10 rounded-xl bg-amber-200 text-amber-800 flex items-center justify-center text-xl font-bold mb-3">
-                ➡
-              </div>
-              <h3 class="text-base font-black text-amber-900 mb-1.5">秘訣二：除以 0.1, 0.01, 0.001</h3>
-              <p class="text-xs text-slate-600 mb-3 leading-relaxed">
-                除以純小數，等於乘以它的倒數，<strong>數值會變大</strong>！
-              </p>
-              <div class="bg-white rounded-xl p-3.5 border border-amber-200 space-y-2 text-xs font-mono-num shadow-sm">
-                <div class="flex justify-between items-center text-slate-700">
-                  <span class="font-bold text-amber-800">÷ 0.1 (一位小數)</span>
-                  <span class="font-sans font-black text-orange-600">向右跳 1 位（相當於 × 10）</span>
-                </div>
-                <div class="flex justify-between items-center text-slate-700">
-                  <span class="font-bold text-amber-800">÷ 0.01 (兩位小數)</span>
-                  <span class="font-sans font-black text-orange-600">向右跳 2 位（相當於 × 100）</span>
-                </div>
-                <div class="flex justify-between items-center text-slate-700">
-                  <span class="font-bold text-amber-800">÷ 0.001 (三位小數)</span>
-                  <span class="font-sans font-black text-orange-600">向右跳 3 位（相當於 × 1000）</span>
-                </div>
-              </div>
-              <div class="mt-3 text-xs text-amber-900 bg-amber-100/90 p-2.5 rounded-xl border border-amber-200">
-                🔔 <strong class="text-amber-800">小提醒：</strong>向右跳如果超出小數位數，在數字後面補 <strong>0</strong>（例：3.5 ÷ 0.01 = 350）。
-              </div>
-            </div>
-
-          </div>
-
-          <div class="overflow-x-auto rounded-2xl border-2 border-amber-200 mt-4">
-            <table class="w-full text-xs text-left text-slate-700">
-              <thead class="text-xs bg-amber-100/90 text-amber-900 font-black">
-                <tr>
-                  <th class="px-4 py-3">運算子</th>
-                  <th class="px-4 py-3">等效乘法</th>
-                  <th class="px-4 py-3">小數點方向</th>
-                  <th class="px-4 py-3">跳躍格數</th>
-                  <th class="px-4 py-3">範例（原數 4.8）</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-amber-100 font-mono-num bg-white">
-                <tr class="hover:bg-sky-50/50">
-                  <td class="px-4 py-2.5 font-bold text-sky-700">÷ 10</td>
-                  <td class="px-4 py-2.5 font-sans text-slate-500">× 1/10</td>
-                  <td class="px-4 py-2.5 font-sans font-bold text-sky-700">⬅ 向左（變小）</td>
-                  <td class="px-4 py-2.5">1 格</td>
-                  <td class="px-4 py-2.5 font-bold text-amber-800">0.48</td>
-                </tr>
-                <tr class="hover:bg-sky-50/50">
-                  <td class="px-4 py-2.5 font-bold text-sky-700">÷ 100</td>
-                  <td class="px-4 py-2.5 font-sans text-slate-500">× 1/100</td>
-                  <td class="px-4 py-2.5 font-sans font-bold text-sky-700">⬅ 向左（變小）</td>
-                  <td class="px-4 py-2.5">2 格</td>
-                  <td class="px-4 py-2.5 font-bold text-amber-800">0.048</td>
-                </tr>
-                <tr class="hover:bg-sky-50/50">
-                  <td class="px-4 py-2.5 font-bold text-sky-700">÷ 1000</td>
-                  <td class="px-4 py-2.5 font-sans text-slate-500">× 1/1000</td>
-                  <td class="px-4 py-2.5 font-sans font-bold text-sky-700">⬅ 向左（變小）</td>
-                  <td class="px-4 py-2.5">3 格</td>
-                  <td class="px-4 py-2.5 font-bold text-amber-800">0.0048</td>
-                </tr>
-                <tr class="hover:bg-amber-50/50">
-                  <td class="px-4 py-2.5 font-bold text-orange-600">÷ 0.1</td>
-                  <td class="px-4 py-2.5 font-sans text-emerald-700 font-bold">× 10</td>
-                  <td class="px-4 py-2.5 font-sans font-bold text-orange-700">向右（變大） ➡</td>
-                  <td class="px-4 py-2.5">1 格</td>
-                  <td class="px-4 py-2.5 font-bold text-sky-800">48</td>
-                </tr>
-                <tr class="hover:bg-amber-50/50">
-                  <td class="px-4 py-2.5 font-bold text-orange-600">÷ 0.01</td>
-                  <td class="px-4 py-2.5 font-sans text-emerald-700 font-bold">× 100</td>
-                  <td class="px-4 py-2.5 font-sans font-bold text-orange-700">向右（變大） ➡</td>
-                  <td class="px-4 py-2.5">2 格</td>
-                  <td class="px-4 py-2.5 font-bold text-sky-800">480</td>
-                </tr>
-                <tr class="hover:bg-amber-50/50">
-                  <td class="px-4 py-2.5 font-bold text-orange-600">÷ 0.001</td>
-                  <td class="px-4 py-2.5 font-sans text-emerald-700 font-bold">× 1000</td>
-                  <td class="px-4 py-2.5 font-sans font-bold text-orange-700">向右（變大） ➡</td>
-                  <td class="px-4 py-2.5">3 格</td>
-                  <td class="px-4 py-2.5 font-bold text-sky-800">4800</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-        </div>
-
-      </section>
-
-    </main>
-
-    <!-- Hint Modal Dialog -->
-    <div id="hintModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-      <div class="bg-white border-4 border-amber-300 rounded-3xl max-w-md w-full p-6 shadow-2xl">
-        <div class="flex items-center justify-between mb-4">
+        <!-- P2 Header status -->
+        <div class="flex items-center justify-between mb-2">
           <div class="flex items-center gap-2">
-            <span class="text-2xl">🎒</span>
-            <h3 class="text-lg font-black text-amber-900">課堂速記小錦囊</h3>
+            <span class="w-7 h-7 rounded-xl bg-sky-100 text-sky-800 font-black text-sm flex items-center justify-center border border-sky-300">P2</span>
+            <span class="font-black text-sky-950 text-sm sm:text-base">藍跳跳隊</span>
           </div>
-          <button onclick="toggleHintModal()" class="w-8 h-8 flex items-center justify-center rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold">✕</button>
-        </div>
-        <div class="space-y-3 text-xs text-slate-700">
-          <div class="p-3.5 bg-sky-50 rounded-2xl border-2 border-sky-200">
-            <div class="font-bold text-sky-800 mb-1">【除以 10, 100, 1000】向左跳 ⬅</div>
-            <p>代表數值變小。10 有 1 個 0 跳 1 位；100 有 2 個 0 跳 2 位；1000 有 3 個 0 跳 3 位。</p>
-          </div>
-          <div class="p-3.5 bg-amber-50 rounded-2xl border-2 border-amber-200">
-            <div class="font-bold text-amber-800 mb-1">【除以 0.1, 0.01, 0.001】向右跳 ➡</div>
-            <p>除以小數等於變大！0.1 是 1 位小數跳 1 位；0.01 是 2 位小數跳 2 位；0.001 是 3 位小數跳 3 位。</p>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-sky-700 bg-sky-50 px-2.5 py-0.5 rounded-lg border border-sky-200">
+              連擊: <strong id="p2Combo" class="font-mono-num text-orange-600">0</strong>
+            </span>
+            <span class="text-xs font-bold text-sky-700 bg-sky-50 px-2.5 py-0.5 rounded-lg border border-sky-200">
+              得分: <strong id="p2Score" class="font-mono-num text-sky-700">0</strong>
+            </span>
           </div>
         </div>
-        <button onclick="toggleHintModal()" class="mt-5 w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 font-black text-white text-xs shadow-md shadow-amber-200 transition">
-          我記住了，繼續答題！
-        </button>
+
+        <!-- P2 Arithmetic Expression -->
+        <div class="bg-gradient-to-b from-sky-50 to-white border-2 border-sky-200 rounded-2xl py-3 px-2 text-center my-1.5 shadow-inner">
+          <div class="text-[11px] font-bold text-sky-800 mb-1">【P2 題目】小數點該往哪裡跳？</div>
+          <div class="inline-flex items-center justify-center gap-2 sm:gap-3 font-mono-num font-black text-2xl sm:text-4xl text-slate-800">
+            <span id="p2BaseNum" class="text-sky-900">3.14</span>
+            <span class="text-rose-500">÷</span>
+            <span id="p2Divisor" class="text-orange-600 bg-orange-100 px-2.5 py-0.5 rounded-xl border border-orange-300 text-xl sm:text-3xl">0.1</span>
+            <span class="text-slate-400">=</span>
+            <span class="text-amber-500 text-2xl sm:text-3xl animate-pulse">？</span>
+          </div>
+        </div>
+
+        <!-- P2 Digit Reel interactive bar -->
+        <div class="bg-sky-50/70 border-2 border-dashed border-sky-300 rounded-2xl p-2.5 sm:p-3 my-1 flex flex-col items-center">
+          <div class="w-full flex items-center justify-between text-[11px] font-black text-slate-600 mb-1">
+            <span class="text-sky-700 bg-sky-100 px-2 py-0.5 rounded-md">⬅ 向左（縮小）</span>
+            <span id="p2ShiftLabel" class="text-sky-800 font-bold">小數點未移動</span>
+            <span class="text-orange-700 bg-orange-100 px-2 py-0.5 rounded-md">向右（放大） ➡</span>
+          </div>
+
+          <div class="w-full overflow-x-auto py-2 flex justify-center">
+            <div id="p2DigitTape" class="flex items-center gap-1 font-mono-num text-xl sm:text-3xl">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- P2 Move Action Buttons -->
+          <div class="flex items-center justify-center gap-2 mt-2 w-full">
+            <button onclick="shiftP2Decimal(-1)" class="flex-1 py-3 sm:py-3.5 px-3 rounded-2xl bg-white hover:bg-sky-50 active:scale-95 border-2 border-sky-300 text-sky-800 font-black text-sm sm:text-base flex items-center justify-center gap-1 shadow-sm">
+              <span>⬅</span> 向左跳
+            </button>
+            <button onclick="resetP2Decimal()" class="py-3 sm:py-3.5 px-3 rounded-2xl bg-white hover:bg-amber-50 active:scale-95 border-2 border-amber-300 text-amber-800 font-black text-xs sm:text-sm shadow-sm" title="重置回原位">
+              🔄 原位
+            </button>
+            <button onclick="shiftP2Decimal(1)" class="flex-1 py-3 sm:py-3.5 px-3 rounded-2xl bg-white hover:bg-orange-50 active:scale-95 border-2 border-orange-300 text-orange-800 font-black text-sm sm:text-base flex items-center justify-center gap-1 shadow-sm">
+              向右跳 <span>➡</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- P2 Bottom Result & Confirm Button -->
+        <div class="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-sky-100">
+          <div>
+            <div class="text-[11px] font-bold text-slate-500">當前擺放答案：</div>
+            <div id="p2ValueDisplay" class="text-2xl sm:text-3xl font-mono-num font-black text-sky-950">
+              3.14
+            </div>
+          </div>
+
+          <button id="p2SubmitBtn" onclick="submitP2Answer()" class="px-6 sm:px-8 py-3.5 rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 active:scale-95 text-white font-black text-base tracking-wider shadow-lg shadow-sky-200 transition">
+            🐸 送出答案！
+          </button>
+        </div>
+
+        <!-- P2 Toast Feedback -->
+        <div id="p2Feedback" class="hidden absolute inset-x-3 bottom-3 p-3 rounded-2xl text-xs sm:text-sm font-black text-center shadow-lg transition-all z-20"></div>
       </div>
+
     </div>
 
-    <!-- Game Over / Victory Modal -->
-    <div id="resultModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-      <div class="bg-white border-4 border-amber-300 rounded-3xl max-w-md w-full p-6 sm:p-8 text-center shadow-2xl">
-        <div id="modalIcon" class="text-6xl mb-3 animate-bounce">🏆</div>
-        <h3 id="modalTitle" class="text-2xl font-black text-amber-900 mb-2">闖關成功！</h3>
-        <p id="modalDesc" class="text-xs sm:text-sm text-slate-600 mb-6 leading-relaxed">
-          你已經徹底征服了小數點跳躍規律，成為真正的校園心算小博士！
-        </p>
+    <!-- 1-PLAYER SOLO EXPANDED VIEW BANNER (Only in 1P mode) -->
+    <div id="soloGuidanceBanner" class="hidden mt-3 bg-amber-50 border-2 border-amber-300 rounded-2xl p-3 text-center text-xs font-bold text-amber-900 shadow-sm">
+      🎯 【單人闖關模式】：3 分鐘內盡全力跳滿 10 步登上領獎台！如果答錯青蛙會滑落 1 步喔！
+    </div>
+  </main>
 
-        <!-- Stats breakdown -->
-        <div class="bg-amber-50 rounded-2xl p-4 border-2 border-amber-200 mb-6 grid grid-cols-2 gap-3 text-left font-mono-num">
-          <div>
-            <div class="text-[11px] font-bold text-slate-500">最終獲得星星</div>
-            <div id="finalScore" class="text-2xl font-black text-emerald-600">1200</div>
-          </div>
-          <div>
-            <div class="text-[11px] font-bold text-slate-500">最高連擊次數</div>
-            <div id="finalCombo" class="text-2xl font-black text-amber-600">10 COMBO</div>
-          </div>
+  <!-- Rules Notebook Modal -->
+  <div id="rulesModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/50 backdrop-blur-xs">
+    <div class="bg-white border-4 border-emerald-400 rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b-2 border-emerald-100 pb-3 mb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">📜</span>
+          <h3 class="text-lg font-black text-emerald-950">小數點跳躍魔法口訣</h3>
+        </div>
+        <button onclick="closeRulesModal()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 font-bold text-slate-700">✕</button>
+      </div>
+      
+      <div class="space-y-3 text-xs sm:text-sm text-slate-700">
+        <div class="p-3 bg-sky-50 rounded-2xl border-2 border-sky-200">
+          <h4 class="font-black text-sky-900 mb-1">秘訣一：除以整十整百（÷ 10, 100, 1000）</h4>
+          <p class="leading-relaxed">
+            平分給好多人，數值變小 $\rightarrow$ <strong>向左跳 ⬅</strong>！<br>
+            • 除以 10 (1個0)：向左跳 1 位<br>
+            • 除以 100 (2個0)：向左跳 2 位<br>
+            • 除以 1000 (3個0)：向左跳 3 位
+          </p>
         </div>
 
-        <button onclick="restartGame()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 font-black text-white text-sm shadow-lg shadow-orange-200 active:scale-95 transition">
-          🎒 再玩一輪！
-        </button>
+        <div class="p-3 bg-amber-50 rounded-2xl border-2 border-amber-200">
+          <h4 class="font-black text-amber-900 mb-1">秘訣二：除以純小數（÷ 0.1, 0.01, 0.001）</h4>
+          <p class="leading-relaxed">
+            除以純小數相當於乘以 10/100/1000，數值反向變大 $\rightarrow$ <strong>向右跳 ➡</strong>！<br>
+            • 除以 0.1 (一位小數)：向右跳 1 位<br>
+            • 除以 0.01 (兩位小數)：向右跳 2 位<br>
+            • 除以 0.001 (三位小數)：向右跳 3 位
+          </p>
+        </div>
+
+        <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-emerald-900 font-bold">
+          💡 補零秘訣：位數不夠時，整數補 0（例 5÷100 = 0.05），小數後面補 0（例 2.3÷0.01 = 230）。
+        </div>
       </div>
+
+      <button onclick="closeRulesModal()" class="mt-4 w-full py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 font-black text-white text-sm shadow-md shadow-emerald-200 transition">
+        我記住口訣了，開始比賽！
+      </button>
     </div>
+  </div>
 
-    <!-- Footer -->
-    <footer class="mt-6 text-center text-xs text-slate-500 py-2 font-medium">
-      🏫 快樂學習小數點：除以 10 / 100 / 1000 ⬅ 數值變小 | 除以 0.1 / 0.01 / 0.001 ➡ 數值變大
-    </footer>
+  <!-- Game Over / Race Result Dialog -->
+  <div id="resultModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+    <div class="bg-white border-4 border-amber-300 rounded-3xl max-w-md w-full p-6 text-center shadow-2xl">
+      <div id="resIcon" class="text-6xl mb-2 animate-bounce">🏆</div>
+      <h3 id="resTitle" class="text-2xl font-black text-amber-950 mb-1">比賽結束！</h3>
+      <p id="resDesc" class="text-xs sm:text-sm text-slate-600 mb-5 leading-relaxed"></p>
 
+      <!-- Scoreboard summary -->
+      <div id="resScoreBoard" class="bg-amber-50 rounded-2xl p-4 border-2 border-amber-200 mb-5 grid grid-cols-2 gap-3 text-center font-mono-num">
+        <div class="bg-white p-2.5 rounded-xl border border-emerald-200">
+          <div class="text-[11px] font-bold text-emerald-800">🟢 綠跳跳隊 (P1)</div>
+          <div id="resP1Steps" class="text-xl font-black text-emerald-600">0 步</div>
+          <div id="resP1Score" class="text-xs text-slate-400">0 分</div>
+        </div>
+        <div id="resP2Col" class="bg-white p-2.5 rounded-xl border border-sky-200">
+          <div class="text-[11px] font-bold text-sky-800">🔵 藍跳跳隊 (P2)</div>
+          <div id="resP2Steps" class="text-xl font-black text-sky-600">0 步</div>
+          <div id="resP2Score" class="text-xs text-slate-400">0 分</div>
+        </div>
+      </div>
+
+      <button onclick="restartMatch()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 font-black text-white text-base shadow-lg shadow-emerald-200 active:scale-95 transition">
+        🔄 重新開始新的一局！
+      </button>
+    </div>
   </div>
 
   <script>
-    /* =========================================================
-       AUDIO SYNTHESIZER (Campus Bell & Marimba Tones)
-       ========================================================= */
     let audioCtx = null;
     let soundEnabled = true;
 
     function initAudio() {
       if (!audioCtx) {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext) {
-          audioCtx = new AudioContext();
-        }
+        if (AudioContext) audioCtx = new AudioContext();
       }
       if (audioCtx && audioCtx.state === 'suspended') {
         audioCtx.resume();
@@ -585,162 +427,100 @@
 
     function toggleAudio() {
       soundEnabled = !soundEnabled;
-      const icon = document.getElementById('soundIcon');
-      if (icon) {
-        icon.textContent = soundEnabled ? '🔔' : '🔕';
-      }
+      document.getElementById('soundIcon').textContent = soundEnabled ? '🔔' : '🔕';
     }
 
-    // Play cheerful synthesized chimes
     function playSound(type) {
       if (!soundEnabled) return;
       initAudio();
       if (!audioCtx) return;
 
-      try {
-        const now = audioCtx.currentTime;
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
 
-        if (type === 'step-left') {
-          // Warm chime going left
+      try {
+        if (type === 'step') {
+          // Cheerful click
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(550, now);
-          osc.frequency.exponentialRampToValueAtTime(380, now + 0.12);
-          gain.gain.setValueAtTime(0.18, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+          osc.frequency.setValueAtTime(480, now);
+          osc.frequency.exponentialRampToValueAtTime(320, now + 0.08);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
           osc.start(now);
-          osc.stop(now + 0.12);
-        } else if (type === 'step-right') {
-          // Cheerful chime going right
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(380, now);
-          osc.frequency.exponentialRampToValueAtTime(620, now + 0.12);
-          gain.gain.setValueAtTime(0.18, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-          osc.start(now);
-          osc.stop(now + 0.12);
-        } else if (type === 'correct') {
-          // Happy classroom xylophone fanfare
+          osc.stop(now + 0.08);
+        } else if (type === 'ribbit-forward') {
+          // Happy frog ribbit going forward
           osc.type = 'triangle';
-          osc.frequency.setValueAtTime(523.25, now); // C5
-          osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
-          osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
-          osc.frequency.setValueAtTime(1046.50, now + 0.24); // C6
+          osc.frequency.setValueAtTime(300, now);
+          osc.frequency.linearRampToValueAtTime(540, now + 0.08);
+          osc.frequency.linearRampToValueAtTime(720, now + 0.18);
           gain.gain.setValueAtTime(0.25, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
           osc.start(now);
-          osc.stop(now + 0.45);
-        } else if (type === 'wrong') {
-          // Gentle boing
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(220, now);
-          osc.frequency.exponentialRampToValueAtTime(140, now + 0.25);
+          osc.stop(now + 0.35);
+        } else if (type === 'splash-backward') {
+          // Water splash slip backward
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(260, now);
+          osc.frequency.exponentialRampToValueAtTime(110, now + 0.25);
           gain.gain.setValueAtTime(0.2, now);
           gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
           osc.start(now);
           osc.stop(now + 0.25);
-        } else if (type === 'reset') {
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(440, now);
-          gain.gain.setValueAtTime(0.12, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+        } else if (type === 'victory') {
+          // Classroom bell fanfare
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(523.25, now);
+          osc.frequency.setValueAtTime(659.25, now + 0.1);
+          osc.frequency.setValueAtTime(783.99, now + 0.2);
+          osc.frequency.setValueAtTime(1046.50, now + 0.3);
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
           osc.start(now);
-          osc.stop(now + 0.08);
+          osc.stop(now + 0.6);
+        } else if (type === 'tick') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(800, now);
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+          osc.start(now);
+          osc.stop(now + 0.05);
         }
       } catch (e) {
-        console.warn("Audio play issue", e);
+        console.warn(e);
       }
     }
 
-    /* =========================================================
-       STREAMING_CHUNK:Defining game logic state and question generators
-       ========================================================= */
-    const TOTAL_QUESTIONS = 10;
-    let currentQuestionIndex = 0;
-    let score = 0;
-    let combo = 0;
-    let maxCombo = 0;
-    let lives = 3;
-    let isAnsweringLocked = false;
+    const MAX_STEPS = 10;
+    const MATCH_DURATION = 180; // 3 minutes = 180s
+    let timeLeft = MATCH_DURATION;
+    let timerInterval = null;
+    let gameMode = '2P'; // '2P' or '1P'
+    let isGameOver = false;
 
-    let currentProblem = null;
-    let currentDeltaShift = 0;
+    // Track steps & scores
+    let p1Steps = 0, p1Score = 0, p1Combo = 0;
+    let p2Steps = 0, p2Score = 0, p2Combo = 0;
 
-    const DIVISORS_TIER1 = [10, 100, 1000];
-    const DIVISORS_TIER2 = [0.1, 0.01, 0.001];
-    const ALL_DIVISORS = [10, 100, 1000, 0.1, 0.01, 0.001];
+    // Decimal shifting question models
+    const DIVISORS = [10, 100, 1000, 0.1, 0.01, 0.001];
+    const SEED_NUMBERS = ["45.8", "3.14", "125", "6.2", "0.75", "890", "5.43", "78.2", "12.04", "0.9", "400", "1.25", "8.6", "94.5"];
 
-    const SEED_NUMBERS = [
-      "45.8", "3.14", "125", "6.2", "0.75", "890", "5.43", "78.2", "12.04", "0.9", "400", "1.25"
-    ];
-
-    function getRandomItem(arr) {
-      return arr[Math.floor(Math.random() * arr.length)];
-    }
-
-    function createProblem(qIdx) {
-      let divisor;
-      let diffLabel = "階段一：除以整十整百 (向左移)";
-      
-      if (qIdx < 3) {
-        divisor = getRandomItem(DIVISORS_TIER1);
-        diffLabel = "階段一：除以 10 / 100 / 1000 (向左跳)";
-      } else if (qIdx < 6) {
-        divisor = getRandomItem(DIVISORS_TIER2);
-        diffLabel = "階段二：除以 0.1 / 0.01 / 0.001 (向右跳)";
-      } else {
-        divisor = getRandomItem(ALL_DIVISORS);
-        diffLabel = "階段三：全能心算綜合挑戰！";
-      }
-
-      const baseStr = getRandomItem(SEED_NUMBERS);
-      const targetData = calculateExpectedShift(baseStr, divisor);
-
-      return {
-        baseStr: baseStr,
-        divisor: divisor,
-        targetShift: targetData.shift,
-        targetStr: targetData.resultStr,
-        explanation: targetData.explanation,
-        diffLabel: diffLabel
-      };
-    }
-
-    /* =========================================================
-       STREAMING_CHUNK:Mathematical string shifting logic without float errors
-       ========================================================= */
-    function calculateExpectedShift(numStr, divisor) {
+    function calculateTarget(numStr, divisor) {
       let shift = 0;
       let exp = "";
-      if (divisor === 10) {
-        shift = -1;
-        exp = "除以 10 有 1 個 0，小數點向左跳 1 格（數字變小）";
-      } else if (divisor === 100) {
-        shift = -2;
-        exp = "除以 100 有 2 個 0，小數點向左跳 2 格（數字變小）";
-      } else if (divisor === 1000) {
-        shift = -3;
-        exp = "除以 1000 有 3 個 0，小數點向左跳 3 格（數字變小）";
-      } else if (divisor === 0.1) {
-        shift = 1;
-        exp = "除以 0.1 等同於乘以 10，小數點向右跳 1 格（數字變大）";
-      } else if (divisor === 0.01) {
-        shift = 2;
-        exp = "除以 0.01 等同於乘以 100，小數點向右跳 2 格（數字變大）";
-      } else if (divisor === 0.001) {
-        shift = 3;
-        exp = "除以 0.001 等同於乘以 1000，小數點向右跳 3 格（數字變大）";
-      }
+      if (divisor === 10) { shift = -1; exp = "除以 10：向左跳 1 位 ⬅"; }
+      else if (divisor === 100) { shift = -2; exp = "除以 100：向左跳 2 位 ⬅"; }
+      else if (divisor === 1000) { shift = -3; exp = "除以 1000：向左跳 3 位 ⬅"; }
+      else if (divisor === 0.1) { shift = 1; exp = "除以 0.1：向右跳 1 位 ➡"; }
+      else if (divisor === 0.01) { shift = 2; exp = "除以 0.01：向右跳 2 位 ➡"; }
+      else if (divisor === 0.001) { shift = 3; exp = "除以 0.001：向右跳 3 位 ➡"; }
 
       const resultStr = applyDecimalShift(numStr, shift);
-      return {
-        shift: shift,
-        resultStr: resultStr,
-        explanation: exp
-      };
+      return { shift, resultStr, explanation: exp };
     }
 
     function applyDecimalShift(str, shift) {
@@ -784,420 +564,520 @@
       }
     }
 
-    /* =========================================================
-       STREAMING_CHUNK:Rendering cheerful campus digit cards and bouncy dot
-       ========================================================= */
-    let tapeDigits = [];
-    let activeDotIndex = 0;
-    let baseDotIndex = 0;
+    function renderPondTracks() {
+      const p1Container = document.getElementById('p1TrackPads');
+      const p2Container = document.getElementById('p2TrackPads');
+      p1Container.innerHTML = '';
+      p2Container.innerHTML = '';
 
-    function loadProblem(p) {
-      currentProblem = p;
-      currentDeltaShift = 0;
+      for (let i = 0; i <= MAX_STEPS; i++) {
+        // P1 Pad
+        const pad1 = document.createElement('div');
+        pad1.className = "flex flex-col items-center justify-center relative";
+        
+        const isP1Here = (p1Steps === i);
+        pad1.innerHTML = `
+          <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-mono-num font-bold text-xs transition-all duration-300 ${
+            isP1Here 
+              ? 'bg-emerald-500 text-white ring-4 ring-emerald-200 scale-110 shadow-md' 
+              : (i === MAX_STEPS ? 'bg-amber-200 text-amber-900 border-2 border-amber-400' : 'bg-emerald-100/90 text-emerald-800 border border-emerald-300')
+          }">
+            ${i === MAX_STEPS ? '🏆' : i}
+          </div>
+          ${isP1Here ? '<span class="absolute -top-6 text-xl sm:text-2xl animate-frog-hop">🐸</span>' : ''}
+        `;
+        p1Container.appendChild(pad1);
 
-      document.getElementById('qIndex').textContent = (currentQuestionIndex + 1);
-      document.getElementById('qOriginNumber').textContent = p.baseStr;
-      document.getElementById('qDivisor').textContent = p.divisor;
-      document.getElementById('diffDisplay').textContent = p.diffLabel;
+        // P2 Pad
+        const pad2 = document.createElement('div');
+        pad2.className = "flex flex-col items-center justify-center relative";
+        const isP2Here = (p2Steps === i);
+        pad2.innerHTML = `
+          <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-mono-num font-bold text-xs transition-all duration-300 ${
+            isP2Here 
+              ? 'bg-sky-500 text-white ring-4 ring-sky-200 scale-110 shadow-md' 
+              : (i === MAX_STEPS ? 'bg-amber-200 text-amber-900 border-2 border-amber-400' : 'bg-sky-100/90 text-sky-800 border border-sky-300')
+          }">
+            ${i === MAX_STEPS ? '🏆' : i}
+          </div>
+          ${isP2Here ? '<span class="absolute -top-6 text-xl sm:text-2xl animate-frog-hop">🐸</span>' : ''}
+        `;
+        p2Container.appendChild(pad2);
+      }
 
-      hideFeedback();
-      setupDigitTape(p.baseStr);
-      updateDisplayValues();
+      document.getElementById('p1StepLabel').textContent = `第 ${p1Steps} / ${MAX_STEPS} 步`;
+      document.getElementById('p2StepLabel').textContent = `第 ${p2Steps} / ${MAX_STEPS} 步`;
     }
 
-    function setupDigitTape(baseStr) {
+    let p1Question = null;
+    let p1TapeDigits = [];
+    let p1BaseDotIndex = 0;
+    let p1ActiveDotIndex = 0;
+    let p1DeltaShift = 0;
+    let p1Lock = false;
+
+    function generateP1Question() {
+      const baseStr = SEED_NUMBERS[Math.floor(Math.random() * SEED_NUMBERS.length)];
+      const divisor = DIVISORS[Math.floor(Math.random() * DIVISORS.length)];
+      const target = calculateTarget(baseStr, divisor);
+
+      p1Question = {
+        baseStr,
+        divisor,
+        targetShift: target.shift,
+        targetStr: target.resultStr,
+        explanation: target.explanation
+      };
+
+      document.getElementById('p1BaseNum').textContent = baseStr;
+      document.getElementById('p1Divisor').textContent = divisor;
+      setupP1Tape(baseStr);
+      p1Lock = false;
+    }
+
+    function setupP1Tape(baseStr) {
       let [intPart, decPart] = baseStr.split('.');
       if (!decPart) decPart = "";
 
-      const LEFT_PADDING = 4;
-      const RIGHT_PADDING = 4;
+      const PAD = 4;
+      p1TapeDigits = [];
+      for (let i = 0; i < PAD; i++) p1TapeDigits.push('0');
+      for (let ch of intPart) p1TapeDigits.push(ch);
+      for (let ch of decPart) p1TapeDigits.push(ch);
+      for (let i = 0; i < PAD; i++) p1TapeDigits.push('0');
 
-      tapeDigits = [];
-      for (let i = 0; i < LEFT_PADDING; i++) tapeDigits.push('0');
-      for (let ch of intPart) tapeDigits.push(ch);
-      for (let ch of decPart) tapeDigits.push(ch);
-      for (let i = 0; i < RIGHT_PADDING; i++) tapeDigits.push('0');
+      p1BaseDotIndex = PAD + intPart.length;
+      p1ActiveDotIndex = p1BaseDotIndex;
+      p1DeltaShift = 0;
 
-      baseDotIndex = LEFT_PADDING + intPart.length;
-      activeDotIndex = baseDotIndex;
-      currentDeltaShift = 0;
-
-      renderTape();
+      renderP1Tape();
+      updateP1Values();
     }
 
-    function renderTape() {
-      const container = document.getElementById('digitTape');
+    function renderP1Tape() {
+      const container = document.getElementById('p1DigitTape');
       container.innerHTML = '';
 
-      for (let i = 0; i < tapeDigits.length; i++) {
-        // Cheerful school number card
-        const digitDiv = document.createElement('div');
-        digitDiv.className = "w-9 h-14 sm:w-12 sm:h-18 flex items-center justify-center font-mono-num font-black rounded-2xl border-2 transition-all shadow-sm select-none";
-        
-        const d = tapeDigits[i];
-        digitDiv.textContent = d;
-        if (d === '0') {
-          digitDiv.classList.add('text-slate-300', 'bg-white', 'border-slate-200');
-        } else {
-          digitDiv.classList.add('text-amber-900', 'bg-amber-100', 'border-amber-300', 'shadow-amber-100');
-        }
-        container.appendChild(digitDiv);
+      for (let i = 0; i < p1TapeDigits.length; i++) {
+        const dDiv = document.createElement('div');
+        dDiv.className = "w-8 h-12 sm:w-10 sm:h-14 flex items-center justify-center font-mono-num font-black rounded-xl border-2 transition select-none " +
+          (p1TapeDigits[i] === '0' ? "text-slate-300 bg-white border-slate-200" : "text-emerald-950 bg-emerald-100 border-emerald-300");
+        dDiv.textContent = p1TapeDigits[i];
+        container.appendChild(dDiv);
 
-        // Dot insertion slot
-        if (i < tapeDigits.length - 1) {
+        if (i < p1TapeDigits.length - 1) {
           const slot = document.createElement('div');
-          slot.className = "w-3.5 sm:w-5 flex items-end justify-center pb-2 cursor-pointer";
+          slot.className = "w-3 sm:w-4 flex items-end justify-center pb-2 cursor-pointer";
           slot.onclick = () => {
-            const shift = (i + 1) - baseDotIndex;
-            setDecimalToShift(shift);
+            if (p1Lock || isGameOver) return;
+            setP1Shift((i + 1) - p1BaseDotIndex);
           };
 
-          if (activeDotIndex === i + 1) {
-            // Cheerful cherry bouncing dot
+          if (p1ActiveDotIndex === i + 1) {
             const dot = document.createElement('div');
-            dot.className = "w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-rose-500 animate-bouncy-dot border-2 border-white ring-4 ring-rose-200 shadow-md";
+            dot.className = "w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-rose-500 animate-bouncy-dot ring-2 ring-rose-200";
             slot.appendChild(dot);
           } else {
-            // Subtle dotted target slot
-            const dotPlaceholder = document.createElement('div');
-            dotPlaceholder.className = "w-2 h-2 rounded-full bg-slate-300 hover:bg-rose-400 hover:scale-125 transition";
-            slot.appendChild(dotPlaceholder);
+            const dotPl = document.createElement('div');
+            dotPl.className = "w-2 h-2 rounded-full bg-slate-300 hover:bg-emerald-400";
+            slot.appendChild(dotPl);
           }
           container.appendChild(slot);
         }
       }
-
-      updateStatusTexts();
     }
 
-    function stepDecimal(direction) {
-      if (isAnsweringLocked) return;
-      const targetShift = currentDeltaShift + direction;
-      if (Math.abs(targetShift) > 3) return;
-      setDecimalToShift(targetShift);
-      playSound(direction < 0 ? 'step-left' : 'step-right');
+    function shiftP1Decimal(dir) {
+      if (p1Lock || isGameOver) return;
+      const target = p1DeltaShift + dir;
+      if (Math.abs(target) > 3) return;
+      setP1Shift(target);
+      playSound('step');
     }
 
-    function setDecimalToShift(shift) {
-      if (isAnsweringLocked) return;
-      if (Math.abs(shift) > 4) return;
-      currentDeltaShift = shift;
-      activeDotIndex = baseDotIndex + shift;
-      renderTape();
-      updateDisplayValues();
+    function setP1Shift(shift) {
+      if (p1Lock || isGameOver) return;
+      if (Math.abs(shift) > 3) return;
+      p1DeltaShift = shift;
+      p1ActiveDotIndex = p1BaseDotIndex + shift;
+      renderP1Tape();
+      updateP1Values();
     }
 
-    function resetCurrentNumber() {
-      if (isAnsweringLocked) return;
-      currentDeltaShift = 0;
-      activeDotIndex = baseDotIndex;
-      renderTape();
-      updateDisplayValues();
-      playSound('reset');
+    function resetP1Decimal() {
+      if (p1Lock || isGameOver) return;
+      setP1Shift(0);
+      playSound('step');
     }
 
-    function getFormedValueString() {
-      const rawDigits = tapeDigits.join('');
-      const before = rawDigits.slice(0, activeDotIndex);
-      const after = rawDigits.slice(activeDotIndex);
-
-      let full = before + "." + after;
-      return cleanTrailingZeros(cleanLeadingZeros(full));
+    function getP1ValueString() {
+      const raw = p1TapeDigits.join('');
+      const before = raw.slice(0, p1ActiveDotIndex);
+      const after = raw.slice(p1ActiveDotIndex);
+      return cleanTrailingZeros(cleanLeadingZeros(before + "." + after));
     }
 
-    function updateDisplayValues() {
-      const val = getFormedValueString();
-      const valDisplay = document.getElementById('currentValueDisplay');
-      if (valDisplay) {
-        valDisplay.textContent = val;
-      }
+    function updateP1Values() {
+      const val = getP1ValueString();
+      document.getElementById('p1ValueDisplay').textContent = val;
+      const lbl = document.getElementById('p1ShiftLabel');
+      if (p1DeltaShift === 0) lbl.textContent = "小數點未移動";
+      else if (p1DeltaShift < 0) lbl.textContent = `向左跳 ${Math.abs(p1DeltaShift)} 格 ⬅`;
+      else lbl.textContent = `向右跳 ${p1DeltaShift} 格 ➡`;
     }
 
-    function updateStatusTexts() {
-      const status = document.getElementById('jumpDeltaStatus');
-      if (!status) return;
+    function submitP1Answer() {
+      if (p1Lock || isGameOver) return;
+      const userVal = getP1ValueString();
+      const isCorrect = (userVal === p1Question.targetStr) || (p1DeltaShift === p1Question.targetShift);
+      p1Lock = true;
 
-      if (currentDeltaShift === 0) {
-        status.innerHTML = `當前小數點移動：<span class="text-amber-800 bg-white px-2 py-0.5 rounded-md border border-amber-200">原地未動 (0 位)</span>`;
-      } else if (currentDeltaShift < 0) {
-        status.innerHTML = `當前小數點移動：<span class="text-sky-800 bg-sky-100 px-2.5 py-0.5 rounded-lg border border-sky-300 font-black">向左跳躍 ${Math.abs(currentDeltaShift)} 位 ⬅（變小）</span>`;
-      } else {
-        status.innerHTML = `當前小數點移動：<span class="text-orange-800 bg-orange-100 px-2.5 py-0.5 rounded-lg border border-orange-300 font-black">向右跳躍 ${currentDeltaShift} 位 ➡（變大）</span>`;
-      }
-    }
-
-    /* =========================================================
-       STREAMING_CHUNK:Managing student answer validation and scoring
-       ========================================================= */
-    function showFeedback(isCorrect, message) {
-      const box = document.getElementById('feedbackBox');
-      box.className = isCorrect 
-        ? "mt-4 p-4 rounded-2xl text-sm font-bold bg-emerald-50 border-2 border-emerald-300 text-emerald-900 flex items-center gap-3 animate-fade-in shadow-sm"
-        : "mt-4 p-4 rounded-2xl text-sm font-bold bg-rose-50 border-2 border-rose-300 text-rose-900 flex items-center gap-3 animate-fade-in shadow-sm";
-      
-      const icon = isCorrect ? '🎉' : '💡';
-      box.innerHTML = `<span class="text-2xl">${icon}</span><div>${message}</div>`;
-      box.classList.remove('hidden');
-    }
-
-    function hideFeedback() {
-      const box = document.getElementById('feedbackBox');
-      box.classList.add('hidden');
-    }
-
-    function submitAnswer() {
-      if (isAnsweringLocked) return;
-
-      const userVal = getFormedValueString();
-      const targetVal = currentProblem.targetStr;
-      const isCorrect = (userVal === targetVal) || (currentDeltaShift === currentProblem.targetShift);
-
-      isAnsweringLocked = true;
-
+      const fb = document.getElementById('p1Feedback');
       if (isCorrect) {
-        playSound('correct');
-        combo++;
-        if (combo > maxCombo) maxCombo = combo;
-        
-        const comboBonus = (combo > 1) ? (combo * 15) : 0;
-        const earned = 100 + comboBonus;
-        score += earned;
-
-        if (typeof confetti === 'function') {
-          confetti({
-            particleCount: 50,
-            spread: 70,
-            origin: { y: 0.65 }
-          });
-        }
-
-        showFeedback(true, `
-          <strong class="text-emerald-800 text-base">太棒了！答對了！⭐</strong><br>
-          <span class="text-xs text-emerald-700 font-semibold">
-            ${currentProblem.baseStr} ÷ ${currentProblem.divisor} = <strong>${targetVal}</strong><br>
-            規律筆記：${currentProblem.explanation}（+${earned} 星星積分）
-          </span>
-        `);
-
-        updateStatsUI();
-
-        setTimeout(() => {
-          advanceToNextQuestion();
-        }, 1800);
-
+        playSound('ribbit-forward');
+        p1Combo++;
+        p1Score += 100 + (p1Combo * 10);
+        p1Steps = Math.min(MAX_STEPS, p1Steps + 1);
+        fb.className = "absolute inset-x-3 bottom-3 p-3 rounded-2xl text-xs sm:text-sm font-black text-center shadow-lg bg-emerald-500 text-white block";
+        fb.innerHTML = `🎉 答對了！向前跳 1 步！(+100分)<br><span class="text-[11px] font-medium">${p1Question.explanation}</span>`;
       } else {
-        playSound('wrong');
-        combo = 0;
-        lives--;
+        playSound('splash-backward');
+        p1Combo = 0;
+        p1Steps = Math.max(0, p1Steps - 1);
+        fb.className = "absolute inset-x-3 bottom-3 p-3 rounded-2xl text-xs sm:text-sm font-black text-center shadow-lg bg-rose-500 text-white block";
+        fb.innerHTML = `💦 算錯囉！滑落後退 1 步！<br><span class="text-[11px] font-medium">正確答案是 ${p1Question.targetStr}（${p1Question.explanation}）</span>`;
+      }
 
-        updateStatsUI();
+      document.getElementById('p1Score').textContent = p1Score;
+      document.getElementById('p1Combo').textContent = p1Combo;
+      renderPondTracks();
 
-        showFeedback(false, `
-          <strong class="text-rose-800 text-base">差一點點！位置跳錯囉～</strong><br>
-          <span class="text-xs text-rose-700 font-semibold">
-            正確答案是：<strong>${targetVal}</strong><br>
-            重要口訣：${currentProblem.explanation}
-          </span>
-        `);
+      if (p1Steps >= MAX_STEPS) {
+        setTimeout(() => endGame('P1_WIN'), 600);
+        return;
+      }
 
-        if (lives <= 0) {
-          setTimeout(() => {
-            endGame(false);
-          }, 2000);
+      setTimeout(() => {
+        fb.className = "hidden";
+        generateP1Question();
+      }, 1400);
+    }
+
+    let p2Question = null;
+    let p2TapeDigits = [];
+    let p2BaseDotIndex = 0;
+    let p2ActiveDotIndex = 0;
+    let p2DeltaShift = 0;
+    let p2Lock = false;
+
+    function generateP2Question() {
+      const baseStr = SEED_NUMBERS[Math.floor(Math.random() * SEED_NUMBERS.length)];
+      const divisor = DIVISORS[Math.floor(Math.random() * DIVISORS.length)];
+      const target = calculateTarget(baseStr, divisor);
+
+      p2Question = {
+        baseStr,
+        divisor,
+        targetShift: target.shift,
+        targetStr: target.resultStr,
+        explanation: target.explanation
+      };
+
+      document.getElementById('p2BaseNum').textContent = baseStr;
+      document.getElementById('p2Divisor').textContent = divisor;
+      setupP2Tape(baseStr);
+      p2Lock = false;
+    }
+
+    function setupP2Tape(baseStr) {
+      let [intPart, decPart] = baseStr.split('.');
+      if (!decPart) decPart = "";
+
+      const PAD = 4;
+      p2TapeDigits = [];
+      for (let i = 0; i < PAD; i++) p2TapeDigits.push('0');
+      for (let ch of intPart) p2TapeDigits.push(ch);
+      for (let ch of decPart) p2TapeDigits.push(ch);
+      for (let i = 0; i < PAD; i++) p2TapeDigits.push('0');
+
+      p2BaseDotIndex = PAD + intPart.length;
+      p2ActiveDotIndex = p2BaseDotIndex;
+      p2DeltaShift = 0;
+
+      renderP2Tape();
+      updateP2Values();
+    }
+
+    function renderP2Tape() {
+      const container = document.getElementById('p2DigitTape');
+      container.innerHTML = '';
+
+      for (let i = 0; i < p2TapeDigits.length; i++) {
+        const dDiv = document.createElement('div');
+        dDiv.className = "w-8 h-12 sm:w-10 sm:h-14 flex items-center justify-center font-mono-num font-black rounded-xl border-2 transition select-none " +
+          (p2TapeDigits[i] === '0' ? "text-slate-300 bg-white border-slate-200" : "text-sky-950 bg-sky-100 border-sky-300");
+        dDiv.textContent = p2TapeDigits[i];
+        container.appendChild(dDiv);
+
+        if (i < p2TapeDigits.length - 1) {
+          const slot = document.createElement('div');
+          slot.className = "w-3 sm:w-4 flex items-end justify-center pb-2 cursor-pointer";
+          slot.onclick = () => {
+            if (p2Lock || isGameOver) return;
+            setP2Shift((i + 1) - p2BaseDotIndex);
+          };
+
+          if (p2ActiveDotIndex === i + 1) {
+            const dot = document.createElement('div');
+            dot.className = "w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-rose-500 animate-bouncy-dot ring-2 ring-rose-200";
+            slot.appendChild(dot);
+          } else {
+            const dotPl = document.createElement('div');
+            dotPl.className = "w-2 h-2 rounded-full bg-slate-300 hover:bg-sky-400";
+            slot.appendChild(dotPl);
+          }
+          container.appendChild(slot);
+        }
+      }
+    }
+
+    function shiftP2Decimal(dir) {
+      if (p2Lock || isGameOver) return;
+      const target = p2DeltaShift + dir;
+      if (Math.abs(target) > 3) return;
+      setP2Shift(target);
+      playSound('step');
+    }
+
+    function setP2Shift(shift) {
+      if (p2Lock || isGameOver) return;
+      if (Math.abs(shift) > 3) return;
+      p2DeltaShift = shift;
+      p2ActiveDotIndex = p2BaseDotIndex + shift;
+      renderP2Tape();
+      updateP2Values();
+    }
+
+    function resetP2Decimal() {
+      if (p2Lock || isGameOver) return;
+      setP2Shift(0);
+      playSound('step');
+    }
+
+    function getP2ValueString() {
+      const raw = p2TapeDigits.join('');
+      const before = raw.slice(0, p2ActiveDotIndex);
+      const after = raw.slice(p2ActiveDotIndex);
+      return cleanTrailingZeros(cleanLeadingZeros(before + "." + after));
+    }
+
+    function updateP2Values() {
+      const val = getP2ValueString();
+      document.getElementById('p2ValueDisplay').textContent = val;
+      const lbl = document.getElementById('p2ShiftLabel');
+      if (p2DeltaShift === 0) lbl.textContent = "小數點未移動";
+      else if (p2DeltaShift < 0) lbl.textContent = `向左跳 ${Math.abs(p2DeltaShift)} 格 ⬅`;
+      else lbl.textContent = `向右跳 ${p2DeltaShift} 格 ➡`;
+    }
+
+    function submitP2Answer() {
+      if (p2Lock || isGameOver) return;
+      const userVal = getP2ValueString();
+      const isCorrect = (userVal === p2Question.targetStr) || (p2DeltaShift === p2Question.targetShift);
+      p2Lock = true;
+
+      const fb = document.getElementById('p2Feedback');
+      if (isCorrect) {
+        playSound('ribbit-forward');
+        p2Combo++;
+        p2Score += 100 + (p2Combo * 10);
+        p2Steps = Math.min(MAX_STEPS, p2Steps + 1);
+        fb.className = "absolute inset-x-3 bottom-3 p-3 rounded-2xl text-xs sm:text-sm font-black text-center shadow-lg bg-sky-500 text-white block";
+        fb.innerHTML = `🎉 答對了！向前跳 1 步！(+100分)<br><span class="text-[11px] font-medium">${p2Question.explanation}</span>`;
+      } else {
+        playSound('splash-backward');
+        p2Combo = 0;
+        p2Steps = Math.max(0, p2Steps - 1);
+        fb.className = "absolute inset-x-3 bottom-3 p-3 rounded-2xl text-xs sm:text-sm font-black text-center shadow-lg bg-rose-500 text-white block";
+        fb.innerHTML = `💦 算錯囉！滑落後退 1 步！<br><span class="text-[11px] font-medium">正確答案是 ${p2Question.targetStr}（${p2Question.explanation}）</span>`;
+      }
+
+      document.getElementById('p2Score').textContent = p2Score;
+      document.getElementById('p2Combo').textContent = p2Combo;
+      renderPondTracks();
+
+      if (p2Steps >= MAX_STEPS) {
+        setTimeout(() => endGame('P2_WIN'), 600);
+        return;
+      }
+
+      setTimeout(() => {
+        fb.className = "hidden";
+        generateP2Question();
+      }, 1400);
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timeLeft = MATCH_DURATION;
+      updateTimerDisplay();
+
+      timerInterval = setInterval(() => {
+        if (timeLeft > 0) {
+          timeLeft--;
+          updateTimerDisplay();
+          if (timeLeft <= 10 && timeLeft > 0) playSound('tick');
         } else {
-          setTimeout(() => {
-            advanceToNextQuestion();
-          }, 2600);
+          clearInterval(timerInterval);
+          endGame('TIME_UP');
         }
-      }
+      }, 1000);
     }
 
-    function advanceToNextQuestion() {
-      currentQuestionIndex++;
-      if (currentQuestionIndex >= TOTAL_QUESTIONS) {
-        endGame(true);
-      } else {
-        isAnsweringLocked = false;
-        loadProblem(createProblem(currentQuestionIndex));
-      }
+    function updateTimerDisplay() {
+      const m = Math.floor(timeLeft / 60);
+      const s = timeLeft % 60;
+      const str = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      document.getElementById('timerText').textContent = str;
     }
 
-    function updateStatsUI() {
-      document.getElementById('scoreDisplay').textContent = `${score} 分`;
-      document.getElementById('comboDisplay').textContent = `${combo} 連擊`;
-      
-      let hearts = '';
-      for (let i = 0; i < 3; i++) {
-        hearts += (i < lives) ? '❤️' : '🤍';
-      }
-      document.getElementById('livesDisplay').textContent = hearts;
-    }
+    function endGame(reason) {
+      if (isGameOver) return;
+      isGameOver = true;
+      clearInterval(timerInterval);
+      playSound('victory');
 
-    function endGame(isVictory) {
       const modal = document.getElementById('resultModal');
-      const title = document.getElementById('modalTitle');
-      const desc = document.getElementById('modalDesc');
-      const icon = document.getElementById('modalIcon');
-      
-      document.getElementById('finalScore').textContent = score;
-      document.getElementById('finalCombo').textContent = `${maxCombo} COMBO`;
+      const title = document.getElementById('resTitle');
+      const desc = document.getElementById('resDesc');
+      const icon = document.getElementById('resIcon');
 
-      if (isVictory) {
-        playSound('correct');
-        icon.textContent = '🏅';
-        title.textContent = '🎉 恭喜通關！校園心算特優生！';
-        desc.textContent = `太厲害了！你以 ${score} 分獲得了滿滿的星星，完全掌握了小數點向左與向右跳躍的規律！`;
-        if (typeof confetti === 'function') {
-          confetti({ particleCount: 160, spread: 100 });
+      document.getElementById('resP1Steps').textContent = `${p1Steps} 步`;
+      document.getElementById('resP1Score').textContent = `${p1Score} 分`;
+      document.getElementById('resP2Steps').textContent = `${p2Steps} 步`;
+      document.getElementById('resP2Score').textContent = `${p2Score} 分`;
+
+      if (typeof confetti === 'function') {
+        confetti({ particleCount: 120, spread: 80 });
+      }
+
+      if (gameMode === '1P') {
+        if (p1Steps >= MAX_STEPS) {
+          icon.textContent = '👑';
+          title.textContent = '🎉 闖關成功！登上蓮花寶座！';
+          desc.textContent = `太厲害了！你成功跳滿 ${MAX_STEPS} 步到達終點，累計得分 ${p1Score} 分！`;
+        } else {
+          icon.textContent = '⏰';
+          title.textContent = '時間到！再接再厲！';
+          desc.textContent = `你在 3 分鐘內完成了 ${p1Steps} 步跳躍，得到了 ${p1Score} 分，下次一定能登頂！`;
         }
       } else {
-        icon.textContent = '🌱';
-        title.textContent = '愛心用光了，再接再厲！';
-        desc.textContent = '別氣餒！可以先翻翻「口訣筆記本」與「歡樂實驗室」玩玩看，馬上就能完全掌握囉！';
+        // 2P comparison
+        if (reason === 'P1_WIN') {
+          icon.textContent = '🥇';
+          title.textContent = '🟢 綠跳跳隊 率先登頂獲勝！';
+          desc.textContent = '恭喜選手 1 (綠跳跳) 率先跳上第 10 步終點金蓮花，奪得冠軍！';
+        } else if (reason === 'P2_WIN') {
+          icon.textContent = '🥇';
+          title.textContent = '🔵 藍跳跳隊 率先登頂獲勝！';
+          desc.textContent = '恭喜選手 2 (藍跳跳) 率先跳上第 10 步終點金蓮花，奪得冠軍！';
+        } else {
+          // Time up
+          if (p1Steps > p2Steps) {
+            icon.textContent = '🏆';
+            title.textContent = '🟢 綠跳跳隊 依前進步數獲勝！';
+            desc.textContent = `3分鐘時間到！綠跳跳以 ${p1Steps} 步領先藍跳跳的 ${p2Steps} 步！`;
+          } else if (p2Steps > p1Steps) {
+            icon.textContent = '🏆';
+            title.textContent = '🔵 藍跳跳隊 依前進步數獲勝！';
+            desc.textContent = `3分鐘時間到！藍跳跳以 ${p2Steps} 步領先綠跳跳的 ${p1Steps} 步！`;
+          } else {
+            icon.textContent = '🤝';
+            title.textContent = '平分秋色！雙蛙並列冠軍！';
+            desc.textContent = `3分鐘時間到！兩隊均前進了 ${p1Steps} 步，實力旗鼓相當！`;
+          }
+        }
       }
 
       modal.classList.remove('hidden');
     }
 
-    function restartGame() {
+    function restartMatch() {
       document.getElementById('resultModal').classList.add('hidden');
-      currentQuestionIndex = 0;
-      score = 0;
-      combo = 0;
-      maxCombo = 0;
-      lives = 3;
-      isAnsweringLocked = false;
-      updateStatsUI();
-      loadProblem(createProblem(0));
+      p1Steps = 0; p1Score = 0; p1Combo = 0;
+      p2Steps = 0; p2Score = 0; p2Combo = 0;
+      isGameOver = false;
+
+      document.getElementById('p1Score').textContent = '0';
+      document.getElementById('p1Combo').textContent = '0';
+      document.getElementById('p2Score').textContent = '0';
+      document.getElementById('p2Combo').textContent = '0';
+
+      renderPondTracks();
+      generateP1Question();
+      if (gameMode === '2P') generateP2Question();
+      startTimer();
+      playSound('step');
     }
 
-    /* =========================================================
-       STREAMING_CHUNK:Operating interactive laboratory features
-       ========================================================= */
-    let sandboxCurrentNumber = "45.8";
+    function setGameMode(mode) {
+      gameMode = mode;
+      const btn2P = document.getElementById('btnMode2P');
+      const btn1P = document.getElementById('btnMode1P');
+      const p2Box = document.getElementById('p2Box');
+      const p2TrackRow = document.getElementById('p2TrackRow');
+      const resP2Col = document.getElementById('resP2Col');
+      const modeTag = document.getElementById('modeTag');
+      const soloBanner = document.getElementById('soloGuidanceBanner');
 
-    function setSandboxFromInput() {
-      const input = document.getElementById('customNumberInput');
-      let val = input.value.trim();
-      if (!val || isNaN(val)) val = "45.8";
-      sandboxCurrentNumber = val;
-      renderSandboxStage(sandboxCurrentNumber, 0, null);
-      document.getElementById('sandboxExplanation').textContent = `✅ 數值已設定為：${sandboxCurrentNumber}。請點選上方除數按鈕開始跳躍！`;
-      playSound('reset');
-    }
-
-    function runSandboxOperation(divisor) {
-      initAudio();
-      const origin = sandboxCurrentNumber;
-      const data = calculateExpectedShift(origin, divisor);
-      const result = data.resultStr;
-
-      playSound(data.shift < 0 ? 'step-left' : 'step-right');
-
-      const expl = document.getElementById('sandboxExplanation');
-      expl.innerHTML = `
-        <span class="text-amber-800 font-black">${origin} ÷ ${divisor}</span><br>
-        👉 <strong>${data.explanation}</strong><br>
-        🏁 最終計算結果：<span class="text-emerald-700 font-black text-base">${result}</span>
-      `;
-
-      renderSandboxStage(origin, data.shift, divisor);
-      sandboxCurrentNumber = result;
-      document.getElementById('customNumberInput').value = result;
-    }
-
-    function renderSandboxStage(numStr, shift, divisor) {
-      const stage = document.getElementById('sandboxAnimStage');
-      stage.innerHTML = '';
-
-      const wrapper = document.createElement('div');
-      wrapper.className = "flex items-center gap-3";
-
-      const beforeSpan = document.createElement('span');
-      beforeSpan.className = "text-slate-500 font-black";
-      beforeSpan.textContent = numStr;
-      wrapper.appendChild(beforeSpan);
-
-      if (divisor !== null) {
-        const arrow = document.createElement('span');
-        arrow.className = "text-lg text-amber-600 font-bold px-1";
-        arrow.textContent = `÷ ${divisor} ➔`;
-        wrapper.appendChild(arrow);
-
-        const afterSpan = document.createElement('span');
-        afterSpan.className = "text-amber-900 font-black underline decoration-rose-400 underline-offset-8 bg-amber-100 px-3 py-1 rounded-xl border border-amber-300";
-        afterSpan.textContent = applyDecimalShift(numStr, shift);
-        wrapper.appendChild(afterSpan);
+      if (mode === '2P') {
+        btn2P.className = "px-3 py-1.5 rounded-xl bg-white text-emerald-800 shadow-sm transition";
+        btn1P.className = "px-3 py-1.5 rounded-xl text-emerald-900 hover:bg-emerald-200/60 transition";
+        p2Box.classList.remove('hidden');
+        p2TrackRow.classList.remove('hidden');
+        resP2Col.classList.remove('hidden');
+        soloBanner.classList.add('hidden');
+        modeTag.textContent = "雙人對賽 🏁";
+      } else {
+        btn1P.className = "px-3 py-1.5 rounded-xl bg-white text-emerald-800 shadow-sm transition";
+        btn2P.className = "px-3 py-1.5 rounded-xl text-emerald-900 hover:bg-emerald-200/60 transition";
+        p2Box.classList.add('hidden');
+        p2TrackRow.classList.add('hidden');
+        resP2Col.classList.add('hidden');
+        soloBanner.classList.remove('hidden');
+        modeTag.textContent = "單人闖關 🎯";
       }
 
-      stage.appendChild(wrapper);
+      restartMatch();
     }
 
-    /* =========================================================
-       STREAMING_CHUNK:Handling tab transitions and hotkeys
-       ========================================================= */
-    function switchMode(mode) {
-      const challengeView = document.getElementById('challengeView');
-      const sandboxView = document.getElementById('sandboxView');
-      const rulesView = document.getElementById('rulesView');
+    function openRulesModal() {
+      document.getElementById('rulesModal').classList.remove('hidden');
+      playSound('step');
+    }
 
-      const tabC = document.getElementById('tabChallenge');
-      const tabS = document.getElementById('tabSandbox');
-      const tabR = document.getElementById('tabRules');
+    function closeRulesModal() {
+      document.getElementById('rulesModal').classList.add('hidden');
+      playSound('step');
+    }
 
-      [tabC, tabS, tabR].forEach(btn => {
-        btn.className = "px-3.5 py-1.5 rounded-xl transition-all duration-200 text-amber-800 hover:bg-amber-200/70";
-      });
-
-      const activeClass = "px-3.5 py-1.5 rounded-xl transition-all duration-200 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm hover:opacity-95";
-
-      challengeView.classList.add('hidden');
-      sandboxView.classList.add('hidden');
-      rulesView.classList.add('hidden');
-
-      if (mode === 'challenge') {
-        challengeView.classList.remove('hidden');
-        tabC.className = activeClass;
-      } else if (mode === 'sandbox') {
-        sandboxView.classList.remove('hidden');
-        tabS.className = activeClass;
-        setSandboxFromInput();
-      } else if (mode === 'rules') {
-        rulesView.classList.remove('hidden');
-        tabR.className = activeClass;
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.warn("Fullscreen request error", err);
+        });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
       }
-
-      playSound('reset');
     }
 
-    function toggleHintModal() {
-      const modal = document.getElementById('hintModal');
-      modal.classList.toggle('hidden');
-      playSound('reset');
-    }
-
-    // Keyboard Arrow Controls
-    window.addEventListener('keydown', (e) => {
-      const isModalOpen = !document.getElementById('hintModal').classList.contains('hidden') || 
-                          !document.getElementById('resultModal').classList.contains('hidden');
-      if (isModalOpen) return;
-
-      if (e.key === 'ArrowLeft') {
-        stepDecimal(-1);
-      } else if (e.key === 'ArrowRight') {
-        stepDecimal(1);
-      } else if (e.key === 'Enter') {
-        submitAnswer();
-      } else if (e.key === 'r' || e.key === 'R') {
-        resetCurrentNumber();
-      }
-    });
-
-    // Window Onload Initialization
-    window.onload = function () {
-      updateStatsUI();
-      loadProblem(createProblem(0));
-      setSandboxFromInput();
+    window.onload = function() {
+      renderPondTracks();
+      generateP1Question();
+      generateP2Question();
+      startTimer();
     };
   </script>
 </body>
