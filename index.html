@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>太空分數大冒險 - 分類收納挑戰</title>
+<style>
+  :root {
+    --pink-bg: #ffeef2;
+    --pink-card: #fff0f5;
+    --pink-accent: #ff7597;
+    --pink-dark: #d84a75;
+    --macaron-blue: #a0e7e5;
+    --macaron-yellow: #fff3b0;
+    --macaron-purple: #bca0dc;
+    --macaron-green: #bbf2c8;
+    --text-dark: #4a3b4e;
+  }
+
+  * {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background: linear-gradient(135deg, #ffd1dc 0%, #ffecf2 50%, #e0c3fc 100%);
+    font-family: 'PingFang TC', 'Microsoft JhengHei', 'Comic Sans MS', sans-serif;
+    color: var(--text-dark);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    overflow-x: hidden;
+    padding: 10px;
+    touch-action: none;
+  }
+
+  /* 頂部資訊列 */
+  .header-bar {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(8px);
+    padding: 10px 20px;
+    border-radius: 20px;
+    box-shadow: 0 8px 20px rgba(255, 117, 151, 0.15);
+  }
+
+  .stat-badge {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--pink-dark);
+    background: #fff;
+    padding: 6px 14px;
+    border-radius: 12px;
+    border: 2px solid var(--pink-accent);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* 數學分數垂直排版規範 */
+  .math-frac {
+    display: inline-flex;
+    flex-direction: column;
+    vertical-align: middle;
+    text-align: center;
+    padding: 0 4px;
+    font-size: 0.95em;
+    line-height: 1;
+  }
+  .math-num {
+    border-bottom: 2px solid currentColor;
+    padding-bottom: 2px;
+  }
+  .math-den {
+    padding-top: 2px;
+  }
+  .math-mixed {
+    display: inline-flex;
+    align-items: center;
+    font-weight: bold;
+  }
+  .math-mixed .whole {
+    margin-right: 4px;
+    font-size: 1.15em;
+  }
+
+  /* 主遊玩舞台 */
+  .game-container {
+    width: 100%;
+    max-width: 900px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+    position: relative;
+    padding: 10px 0;
+  }
+
+  /* 題目卡片區域 */
+  .card-zone {
+    width: 100%;
+    min-height: 190px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+  }
+
+  .draggable-card {
+    background: #ffffff;
+    border: 4px solid var(--pink-accent);
+    border-radius: 24px;
+    padding: 16px 24px;
+    box-shadow: 0 12px 28px rgba(216, 74, 117, 0.2);
+    cursor: grab;
+    touch-action: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 85%;
+    max-width: 480px;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    z-index: 10;
+  }
+
+  .draggable-card:active {
+    cursor: grabbing;
+    transform: scale(1.02);
+    box-shadow: 0 16px 36px rgba(216, 74, 117, 0.3);
+  }
+
+  .expr-container {
+    font-size: 1.45rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    color: #333;
+  }
+
+  .visual-aid {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50px;
+  }
+
+  /* 收納太空箱區域 (拖曳目標) */
+  .bins-zone {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-top: 10px;
+  }
+
+  .drop-bin {
+    background: rgba(255, 255, 255, 0.85);
+    border: 3px dashed var(--pink-accent);
+    border-radius: 20px;
+    padding: 16px 8px;
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+  }
+
+  .drop-bin.hovered {
+    background: #fff3f6;
+    border-style: solid;
+    border-color: var(--pink-dark);
+    transform: scale(1.04);
+  }
+
+  .bin-icon {
+    font-size: 2.2rem;
+    margin-bottom: 6px;
+  }
+
+  .bin-label {
+    font-size: 1.05rem;
+    font-weight: bold;
+    color: var(--pink-dark);
+  }
+
+  /* 提示反饋彈窗 */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    backdrop-filter: blur(4px);
+  }
+
+  .hint-modal {
+    background: #ffffff;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 24px;
+    border: 4px solid var(--pink-accent);
+    padding: 24px;
+    box-shadow: 0 16px 36px rgba(0,0,0,0.2);
+    text-align: center;
+  }
+
+  .hint-title {
+    font-size: 1.35rem;
+    font-weight: bold;
+    color: var(--pink-dark);
+    margin-bottom: 12px;
+  }
+
+  .hint-step {
+    background: var(--pink-bg);
+    border-radius: 12px;
+    padding: 10px;
+    margin: 8px 0;
+    text-align: left;
+    font-size: 1.05rem;
+    line-height: 1.5;
+  }
+
+  .modal-btn {
+    background: var(--pink-accent);
+    color: #fff;
+    font-size: 1.15rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 16px;
+    padding: 10px 24px;
+    margin-top: 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(255, 117, 151, 0.4);
+  }
+
+  /* 結算畫面 */
+  .result-modal {
+    background: #fff;
+    padding: 30px;
+    border-radius: 28px;
+    text-align: center;
+    max-width: 460px;
+    width: 90%;
+    border: 5px solid var(--pink-accent);
+  }
+
+  .stars {
+    font-size: 2.8rem;
+    margin: 15px 0;
+  }
+
+  /* Confetti 畫布 */
+  #confetti-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 90;
+  }
+</style>
+</head>
+<body>
+
+<div class="header-bar">
+  <div class="stat-badge">👨‍🚀 任務目標：四則運算收納</div>
+  <div class="stat-badge">⏱️ <span id="timer">60</span>s</div>
+  <div class="stat-badge">✨ 得分：<span id="score">0</span></div>
+  <div class="stat-badge">🔥 連擊：<span id="combo">0</span></div>
+</div>
+
+<div class="game-container">
+  <div class="card-zone" id="card-zone">
+    <div class="draggable-card" id="active-card">
+      <div class="visual-aid" id="card-visual"></div>
+      <div class="expr-container" id="card-expr">載入題目中...</div>
+      <div style="font-size:0.85rem; color:#888;">👆 拖曳我到合適的太空收集艙</div>
+    </div>
+  </div>
+
+  <div class="bins-zone">
+    <div class="drop-bin" data-type="less_one">
+      <div class="bin-icon">🪐</div>
+      <div class="bin-label">小於 1<br><span style="font-size:0.85rem;font-weight:normal;">(結果 &lt; 1)</span></div>
+    </div>
+    <div class="drop-bin" data-type="one_to_two">
+      <div class="bin-icon">🚀</div>
+      <div class="bin-label">介於 1 與 2<br><span style="font-size:0.85rem;font-weight:normal;">(1 &le; 結果 &le; 2)</span></div>
+    </div>
+    <div class="drop-bin" data-type="greater_two">
+      <div class="bin-icon">⭐</div>
+      <div class="bin-label">大於 2<br><span style="font-size:0.85rem;font-weight:normal;">(結果 &gt; 2)</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="hint-overlay">
+  <div class="hint-modal">
+    <div class="hint-title">💡 宇航計算助手：步驟拆解</div>
+    <div id="hint-content"></div>
+    <button class="modal-btn" onclick="closeHint()">明白了，繼續挑戰！</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="result-overlay">
+  <div class="result-modal">
+    <h2>🎉 太空任務完成！</h2>
+    <div class="stars" id="star-rating">⭐⭐⭐</div>
+    <p style="font-size:1.2rem; margin-bottom: 10px;">最終得分：<strong id="final-score" style="color:var(--pink-dark)">0</strong></p>
+    <p id="feedback-text" style="color:#666; margin-bottom: 20px;">表現非常出色！</p>
+    <button class="modal-btn" onclick="restartGame()">🚀 再玩一次</button>
+  </div>
+</div>
+
+<canvas id="confetti-canvas"></canvas>
+
+<script>
+/* ---------------- 全域音效引擎 (Web Audio API) ---------------- */
+class SoundFx {
+  constructor() {
+    this.ctx = null;
+  }
+  init() {
+    if (!this.ctx) {
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+  }
+  playCorrect() {
+    this.init();
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(523.25, now); // C5
+    osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.15); // G5
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.3);
+  }
+  playWrong() {
+    this.init();
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(220, now);
+    osc.frequency.exponentialRampToValueAtTime(140, now + 0.25);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.25);
+  }
+  playWin() {
+    this.init();
+    [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+      const now = this.ctx.currentTime + i * 0.1;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.25);
+    });
+  }
+}
+const sfx = new SoundFx();
+
+/* ---------------- 分數工具模組 ---------------- */
+class Fraction {
+  constructor(n, d) {
+    if (d === 0) throw new Error("分母不能為零");
+    this.n = n;
+    this.d = d;
+    this.simplify();
+  }
+  static gcd(a, b) {
+    return b === 0 ? Math.abs(a) : Fraction.gcd(b, a % b);
+  }
+  simplify() {
+    const common = Fraction.gcd(this.n, this.d);
+    this.n /= common;
+    this.d /= common;
+    if (this.d < 0) {
+      this.n = -this.n;
+      this.d = -this.d;
+    }
+    return this;
+  }
+  add(f) { return new Fraction(this.n * f.d + f.n * this.d, this.d * f.d); }
+  sub(f) { return new Fraction(this.n * f.d - f.n * this.d, this.d * f.d); }
+  mul(f) { return new Fraction(this.n * f.n, this.d * f.d); }
+  div(f) { return new Fraction(this.n * f.d, this.d * f.n); }
+  val() { return this.n / this.d; }
+  
+  toHTML(allowMixed = true) {
+    if (this.d === 1) return `<span>${this.n}</span>`;
+    if (allowMixed && Math.abs(this.n) > this.d) {
+      const whole = Math.floor(this.n / this.d);
+      const rem = this.n % this.d;
+      if (rem === 0) return `<span>${whole}</span>`;
+      return `<span class="math-mixed"><span class="whole">${whole}</span><span class="math-frac"><span class="math-num">${rem}</span><span class="math-den">${this.d}</span></span></span>`;
+    }
+    return `<span class="math-frac"><span class="math-num">${this.n}</span><span class="math-den">${this.d}</span></span>`;
+  }
+}
+
+/* ---------------- 隨機無限題目生成器 ---------------- */
+let currentQuestion = null;
+
+function generateQuestion() {
+  const templates = [
+    // 類型 1: (A ÷ B) + C
+    () => {
+      const b_den = [2, 3, 4, 5][Math.floor(Math.random() * 4)];
+      const b_num = Math.floor(Math.random() * (b_den - 1)) + 1;
+      const f_b = new Fraction(b_num, b_den); // 除數
+
+      const f_a = new Fraction(Math.floor(Math.random() * 3) + 1, [2, 3, 4][Math.floor(Math.random() * 3)]);
+      const divRes = f_a.div(f_b);
+
+      const f_c = new Fraction(Math.floor(Math.random() * 3) + 1, [2, 3, 4][Math.floor(Math.random() * 3)]);
+      const finalRes = divRes.add(f_c);
+
+      return {
+        html: `${f_a.toHTML()} ÷ ${f_b.toHTML()} + ${f_c.toHTML()}`,
+        result: finalRes,
+        steps: [
+          `先乘除後加減：先計算除法 ${f_a.toHTML()} ÷ ${f_b.toHTML()}`,
+          `除以分數等於乘以倒數：${f_a.toHTML()} × <span class="math-frac"><span class="math-num">${f_b.d}</span><span class="math-den">${f_b.n}</span></span> = ${divRes.toHTML()}`,
+          `進行加法：${divRes.toHTML()} + ${f_c.toHTML()} = <strong>${finalRes.toHTML()}</strong>`
+        ],
+        type: 'pie',
+        valForVisual: f_b.val()
+      };
+    },
+    // 類型 2: A × (B - C) 其中包含帶分數與減法
+    () => {
+      const f_c = new Fraction(1, [3, 4, 5][Math.floor(Math.random() * 3)]);
+      const f_b = new Fraction(f_c.n + [1, 2][Math.floor(Math.random() * 2)], f_c.d); // 確保 B > C
+      const bracketRes = f_b.sub(f_c);
+
+      const f_a = new Fraction(Math.floor(Math.random() * 4) + 2, [2, 3][Math.floor(Math.random() * 2)]);
+      const finalRes = f_a.mul(bracketRes);
+
+      return {
+        html: `${f_a.toHTML()} × (${f_b.toHTML()} - ${f_c.toHTML()})`,
+        result: finalRes,
+        steps: [
+          `括號先算：先計算 (${f_b.toHTML()} - ${f_c.toHTML()}) = ${bracketRes.toHTML()}`,
+          `再計算乘法：${f_a.toHTML()} × ${bracketRes.toHTML()} = <strong>${finalRes.toHTML()}</strong>`
+        ],
+        type: 'line',
+        valForVisual: finalRes.val()
+      };
+    },
+    // 類型 3: A ÷ B ÷ C 連續除法
+    () => {
+      const f_a = new Fraction(Math.floor(Math.random() * 3) + 2, 1);
+      const f_b = new Fraction(Math.floor(Math.random() * 2) + 2, 1);
+      const f_c = new Fraction(2, 3);
+      const step1 = f_a.div(f_b);
+      const finalRes = step1.div(f_c);
+
+      return {
+        html: `${f_a.toHTML()} ÷ ${f_b.toHTML()} ÷ ${f_c.toHTML()}`,
+        result: finalRes,
+        steps: [
+          `由左至右依序除算：${f_a.toHTML()} ÷ ${f_b.toHTML()} = ${step1.toHTML()}`,
+          `再除以 ${f_c.toHTML()}：${step1.toHTML()} × <span class="math-frac"><span class="math-num">3</span><span class="math-den">2</span></span> = <strong>${finalRes.toHTML()}</strong>`
+        ],
+        type: 'pie',
+        valForVisual: 2/3
+      };
+    }
+  ];
+
+  const q = templates[Math.floor(Math.random() * templates.length)]();
+  
+  // 決定歸類區間
+  const val = q.result.val();
+  if (val < 1) {
+    q.category = 'less_one';
+  } else if (val <= 2) {
+    q.category = 'one_to_two';
+  } else {
+    q.category = 'greater_two';
+  }
+
+  return q;
+}
+
+/* ---------------- 繪圖輔助 (圓餅圖與數線圖) ---------------- */
+function renderVisual(container, type, val) {
+  container.innerHTML = '';
+  const canvas = document.createElement('canvas');
+  const size = 64;
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+
+  if (type === 'pie') {
+    // 繪製圓餅比例圖
+    ctx.beginPath();
+    ctx.arc(size/2, size/2, 26, 0, 2 * Math.PI);
+    ctx.fillStyle = '#fce4ec';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#ff7597';
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(size/2, size/2);
+    ctx.arc(size/2, size/2, 26, -Math.PI/2, -Math.PI/2 + (2 * Math.PI * Math.min(val, 1)));
+    ctx.closePath();
+    ctx.fillStyle = '#ff7597';
+    ctx.fill();
+  } else {
+    // 繪製數線標記
+    canvas.width = 120;
+    ctx.strokeStyle = '#a0e7e5';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(10, 32);
+    ctx.lineTo(110, 32);
+    ctx.stroke();
+
+    // 刻度 0, 1, 2, 3
+    for (let i = 0; i <= 3; i++) {
+      const x = 10 + (i / 3) * 100;
+      ctx.beginPath();
+      ctx.moveTo(x, 26);
+      ctx.lineTo(x, 38);
+      ctx.strokeStyle = '#ff7597';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    // 標記點
+    const markX = Math.min(Math.max(10 + (val / 3) * 100, 10), 110);
+    ctx.beginPath();
+    ctx.arc(markX, 32, 6, 0, 2 * Math.PI);
+    ctx.fillStyle = '#d84a75';
+    ctx.fill();
+  }
+  container.appendChild(canvas);
+}
+
+/* ---------------- 遊戲核心邏輯 ---------------- */
+let score = 0;
+let combo = 0;
+let timeLeft = 60;
+let timerId = null;
+let isGameOver = false;
+
+function initGame() {
+  score = 0;
+  combo = 0;
+  timeLeft = 60;
+  isGameOver = false;
+  document.getElementById('score').innerText = score;
+  document.getElementById('combo').innerText = combo;
+  document.getElementById('timer').innerText = timeLeft;
+
+  clearInterval(timerId);
+  timerId = setInterval(() => {
+    timeLeft--;
+    document.getElementById('timer').innerText = timeLeft;
+    if (timeLeft <= 0) {
+      endGame();
+    }
+  }, 1000);
+
+  nextRound();
+}
+
+function nextRound() {
+  currentQuestion = generateQuestion();
+  document.getElementById('card-expr').innerHTML = currentQuestion.html;
+  renderVisual(document.getElementById('card-visual'), currentQuestion.type, currentQuestion.valForVisual);
+  
+  // 重設卡片位置
+  const card = document.getElementById('active-card');
+  card.style.transform = 'translate(0px, 0px)';
+}
+
+function handleAnswer(selectedCategory) {
+  if (isGameOver) return;
+
+  if (selectedCategory === currentQuestion.category) {
+    // 答對
+    sfx.playCorrect();
+    triggerConfetti();
+    combo++;
+    score += 100 + (combo > 1 ? (combo - 1) * 20 : 0);
+    document.getElementById('score').innerText = score;
+    document.getElementById('combo').innerText = combo;
+    nextRound();
+  } else {
+    // 答錯
+    sfx.playWrong();
+    combo = 0;
+    document.getElementById('combo').innerText = combo;
+    showHint(currentQuestion);
+  }
+}
+
+function showHint(q) {
+  const container = document.getElementById('hint-content');
+  container.innerHTML = q.steps.map(step => `<div class="hint-step">${step}</div>`).join('');
+  document.getElementById('hint-overlay').style.display = 'flex';
+}
+
+function closeHint() {
+  document.getElementById('hint-overlay').style.display = 'none';
+  nextRound();
+}
+
+function endGame() {
+  clearInterval(timerId);
+  isGameOver = true;
+  sfx.playWin();
+
+  document.getElementById('final-score').innerText = score;
+  const starsElem = document.getElementById('star-rating');
+  const feedbackElem = document.getElementById('feedback-text');
+
+  if (score >= 1000) {
+    starsElem.innerText = '⭐⭐⭐';
+    feedbackElem.innerText = '太神了！你是全宇宙最強的分數四則運算大師！';
+  } else if (score >= 500) {
+    starsElem.innerText = '⭐⭐☆';
+    feedbackElem.innerText = '很棒的表現！乘除互換概念掌握得相當熟練！';
+  } else {
+    starsElem.innerText = '⭐☆☆';
+    feedbackElem.innerText = '加油！多練習倒數與括號先算的順序會更棒！';
+  }
+
+  document.getElementById('result-overlay').style.display = 'flex';
+}
+
+function restartGame() {
+  document.getElementById('result-overlay').style.display = 'none';
+  initGame();
+}
+
+/* ---------------- 平板觸控與滑鼠拖曳核心 ---------------- */
+const card = document.getElementById('active-card');
+let isDragging = false;
+let startX = 0, startY = 0;
+let currentX = 0, currentY = 0;
+
+function onStart(clientX, clientY) {
+  if (isGameOver) return;
+  isDragging = true;
+  startX = clientX - currentX;
+  startY = clientY - currentY;
+  card.style.transition = 'none';
+}
+
+function onMove(clientX, clientY) {
+  if (!isDragging) return;
+  currentX = clientX - startX;
+  currentY = clientY - startY;
+  card.style.transform = `translate(${currentX}px, ${currentY}px)`;
+
+  // 偵測是否懸浮於收集箱上方
+  checkHoverBin(clientX, clientY);
+}
+
+function onEnd() {
+  if (!isDragging) return;
+  isDragging = false;
+  card.style.transition = 'transform 0.2s ease';
+
+  // 檢查是否放置到收集艙內
+  const cardRect = card.getBoundingClientRect();
+  const centerX = cardRect.left + cardRect.width / 2;
+  const centerY = cardRect.top + cardRect.height / 2;
+
+  let matchedCategory = null;
+  const bins = document.querySelectorAll('.drop-bin');
+  bins.forEach(bin => {
+    const rect = bin.getBoundingClientRect();
+    if (centerX >= rect.left && centerX <= rect.right &&
+        centerY >= rect.top && centerY <= rect.bottom) {
+      matchedCategory = bin.getAttribute('data-type');
+    }
+    bin.classList.remove('hovered');
+  });
+
+  currentX = 0;
+  currentY = 0;
+  card.style.transform = 'translate(0px, 0px)';
+
+  if (matchedCategory) {
+    handleAnswer(matchedCategory);
+  }
+}
+
+function checkHoverBin(x, y) {
+  const bins = document.querySelectorAll('.drop-bin');
+  bins.forEach(bin => {
+    const rect = bin.getBoundingClientRect();
+    if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+      bin.classList.add('hovered');
+    } else {
+      bin.classList.remove('hovered');
+    }
+  });
+}
+
+// 觸控事件監聽
+card.addEventListener('touchstart', (e) => {
+  const touch = e.touches[0];
+  onStart(touch.clientX, touch.clientY);
+}, { passive: false });
+
+window.addEventListener('touchmove', (e) => {
+  if (isDragging) {
+    const touch = e.touches[0];
+    onMove(touch.clientX, touch.clientY);
+    e.preventDefault();
+  }
+}, { passive: false });
+
+window.addEventListener('touchend', onEnd);
+
+// 滑鼠事件監聽
+card.addEventListener('mousedown', (e) => {
+  onStart(e.clientX, e.clientY);
+});
+window.addEventListener('mousemove', (e) => {
+  onMove(e.clientX, e.clientY);
+});
+window.addEventListener('mouseup', onEnd);
+
+/* ---------------- 彩帶粒子特效 (Confetti) ---------------- */
+const confettiCanvas = document.getElementById('confetti-canvas');
+const confCtx = confettiCanvas.getContext('2d');
+let particles = [];
+
+function resizeConfetti() {
+  confettiCanvas.width = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeConfetti);
+resizeConfetti();
+
+function triggerConfetti() {
+  const colors = ['#ff7597', '#a0e7e5', '#fff3b0', '#bca0dc', '#bbf2c8'];
+  for (let i = 0; i < 40; i++) {
+    particles.push({
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+      vx: (Math.random() - 0.5) * 12,
+      vy: (Math.random() - 0.7) * 14,
+      size: Math.random() * 8 + 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rotation: Math.random() * 360,
+      vRot: (Math.random() - 0.5) * 10,
+      alpha: 1
+    });
+  }
+}
+
+function updateConfetti() {
+  confCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+  particles.forEach((p, idx) => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.35; // 重力
+    p.rotation += p.vRot;
+    p.alpha -= 0.015;
+
+    confCtx.save();
+    confCtx.globalAlpha = Math.max(p.alpha, 0);
+    confCtx.translate(p.x, p.y);
+    confCtx.rotate((p.rotation * Math.PI) / 180);
+    confCtx.fillStyle = p.color;
+    confCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+    confCtx.restore();
+
+    if (p.alpha <= 0) particles.splice(idx, 1);
+  });
+  requestAnimationFrame(updateConfetti);
+}
+updateConfetti();
+
+// 啟動遊戲
+window.onload = () => {
+  initGame();
+};
+</script>
+</body>
+</html>
