@@ -1,828 +1,1204 @@
 <!DOCTYPE html>
-<html lang="zh-HK">
+<html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>太空分數大冒險 - 分類收納挑戰</title>
-<style>
-  :root {
-    --pink-bg: #ffeef2;
-    --pink-card: #fff0f5;
-    --pink-accent: #ff7597;
-    --pink-dark: #d84a75;
-    --macaron-blue: #a0e7e5;
-    --macaron-yellow: #fff3b0;
-    --macaron-purple: #bca0dc;
-    --macaron-green: #bbf2c8;
-    --text-dark: #4a3b4e;
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小數點跳跳樂 - 歡樂校園數學冒險</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;600;700;900&family=JetBrains+Mono:wght@600;800&family=Gaegu:wght@700&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .font-mono-num {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .font-handwriting {
+      font-family: 'Gaegu', cursive, 'Noto Sans TC';
+    }
 
-  * {
-    box-sizing: border-box;
-    user-select: none;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
-    margin: 0;
-    padding: 0;
-  }
+    /* Cheerful bouncing ball animation for the decimal dot */
+    @keyframes joyful-bounce {
+      0%, 100% {
+        transform: translateY(0) scale(1);
+        filter: drop-shadow(0 6px 12px rgba(244, 63, 94, 0.45));
+      }
+      50% {
+        transform: translateY(-8px) scale(1.15);
+        filter: drop-shadow(0 14px 18px rgba(244, 63, 94, 0.6));
+      }
+    }
+    .animate-bouncy-dot {
+      animation: joyful-bounce 1.2s infinite ease-in-out;
+    }
 
-  body {
-    background: linear-gradient(135deg, #ffd1dc 0%, #ffecf2 50%, #e0c3fc 100%);
-    font-family: 'PingFang TC', 'Microsoft JhengHei', 'Comic Sans MS', sans-serif;
-    color: var(--text-dark);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    overflow-x: hidden;
-    padding: 10px;
-    touch-action: none;
-  }
+    /* Gentle floating school icons */
+    @keyframes float-gentle {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-6px) rotate(3deg); }
+    }
+    .animate-float-school {
+      animation: float-gentle 3.5s ease-in-out infinite;
+    }
 
-  /* 頂部資訊列 */
-  .header-bar {
-    width: 100%;
-    max-width: 900px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(255, 255, 255, 0.75);
-    backdrop-filter: blur(8px);
-    padding: 10px 20px;
-    border-radius: 20px;
-    box-shadow: 0 8px 20px rgba(255, 117, 151, 0.15);
-  }
+    /* Notebook grid pattern background */
+    .bg-school-grid {
+      background-color: #fffbeb;
+      background-image: 
+        radial-gradient(#fde68a 1.2px, transparent 1.2px), 
+        radial-gradient(#bae6fd 1.2px, #fffbeb 1.2px);
+      background-size: 32px 32px;
+      background-position: 0 0, 16px 16px;
+    }
 
-  .stat-badge {
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: var(--pink-dark);
-    background: #fff;
-    padding: 6px 14px;
-    border-radius: 12px;
-    border: 2px solid var(--pink-accent);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  /* 數學分數垂直排版規範 */
-  .math-frac {
-    display: inline-flex;
-    flex-direction: column;
-    vertical-align: middle;
-    text-align: center;
-    padding: 0 4px;
-    font-size: 0.95em;
-    line-height: 1;
-  }
-  .math-num {
-    border-bottom: 2px solid currentColor;
-    padding-bottom: 2px;
-  }
-  .math-den {
-    padding-top: 2px;
-  }
-  .math-mixed {
-    display: inline-flex;
-    align-items: center;
-    font-weight: bold;
-  }
-  .math-mixed .whole {
-    margin-right: 4px;
-    font-size: 1.15em;
-  }
-
-  /* 主遊玩舞台 */
-  .game-container {
-    width: 100%;
-    max-width: 900px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-around;
-    position: relative;
-    padding: 10px 0;
-  }
-
-  /* 題目卡片區域 */
-  .card-zone {
-    width: 100%;
-    min-height: 190px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-  }
-
-  .draggable-card {
-    background: #ffffff;
-    border: 4px solid var(--pink-accent);
-    border-radius: 24px;
-    padding: 16px 24px;
-    box-shadow: 0 12px 28px rgba(216, 74, 117, 0.2);
-    cursor: grab;
-    touch-action: none;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    width: 85%;
-    max-width: 480px;
-    transition: transform 0.1s ease, box-shadow 0.1s ease;
-    z-index: 10;
-  }
-
-  .draggable-card:active {
-    cursor: grabbing;
-    transform: scale(1.02);
-    box-shadow: 0 16px 36px rgba(216, 74, 117, 0.3);
-  }
-
-  .expr-container {
-    font-size: 1.45rem;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 6px;
-    color: #333;
-  }
-
-  .visual-aid {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 50px;
-  }
-
-  /* 收納太空箱區域 (拖曳目標) */
-  .bins-zone {
-    width: 100%;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
-    margin-top: 10px;
-  }
-
-  .drop-bin {
-    background: rgba(255, 255, 255, 0.85);
-    border: 3px dashed var(--pink-accent);
-    border-radius: 20px;
-    padding: 16px 8px;
-    min-height: 140px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    transition: all 0.2s ease;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.05);
-  }
-
-  .drop-bin.hovered {
-    background: #fff3f6;
-    border-style: solid;
-    border-color: var(--pink-dark);
-    transform: scale(1.04);
-  }
-
-  .bin-icon {
-    font-size: 2.2rem;
-    margin-bottom: 6px;
-  }
-
-  .bin-label {
-    font-size: 1.05rem;
-    font-weight: bold;
-    color: var(--pink-dark);
-  }
-
-  /* 提示反饋彈窗 */
-  .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.5);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-    backdrop-filter: blur(4px);
-  }
-
-  .hint-modal {
-    background: #ffffff;
-    width: 90%;
-    max-width: 500px;
-    border-radius: 24px;
-    border: 4px solid var(--pink-accent);
-    padding: 24px;
-    box-shadow: 0 16px 36px rgba(0,0,0,0.2);
-    text-align: center;
-  }
-
-  .hint-title {
-    font-size: 1.35rem;
-    font-weight: bold;
-    color: var(--pink-dark);
-    margin-bottom: 12px;
-  }
-
-  .hint-step {
-    background: var(--pink-bg);
-    border-radius: 12px;
-    padding: 10px;
-    margin: 8px 0;
-    text-align: left;
-    font-size: 1.05rem;
-    line-height: 1.5;
-  }
-
-  .modal-btn {
-    background: var(--pink-accent);
-    color: #fff;
-    font-size: 1.15rem;
-    font-weight: bold;
-    border: none;
-    border-radius: 16px;
-    padding: 10px 24px;
-    margin-top: 14px;
-    cursor: pointer;
-    box-shadow: 0 4px 10px rgba(255, 117, 151, 0.4);
-  }
-
-  /* 結算畫面 */
-  .result-modal {
-    background: #fff;
-    padding: 30px;
-    border-radius: 28px;
-    text-align: center;
-    max-width: 460px;
-    width: 90%;
-    border: 5px solid var(--pink-accent);
-  }
-
-  .stars {
-    font-size: 2.8rem;
-    margin: 15px 0;
-  }
-
-  /* Confetti 畫布 */
-  #confetti-canvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    pointer-events: none;
-    z-index: 90;
-  }
-</style>
+    /* Custom scrollbar in sunny school colors */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #fef3c7;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #f59e0b;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #d97706;
+    }
+  </style>
 </head>
-<body>
-
-<div class="header-bar">
-  <div class="stat-badge">👨‍🚀 任務目標：四則運算收納</div>
-  <div class="stat-badge">⏱️ <span id="timer">60</span>s</div>
-  <div class="stat-badge">✨ 得分：<span id="score">0</span></div>
-  <div class="stat-badge">🔥 連擊：<span id="combo">0</span></div>
-</div>
-
-<div class="game-container">
-  <div class="card-zone" id="card-zone">
-    <div class="draggable-card" id="active-card">
-      <div class="visual-aid" id="card-visual"></div>
-      <div class="expr-container" id="card-expr">載入題目中...</div>
-      <div style="font-size:0.85rem; color:#888;">👆 拖曳我到合適的太空收集艙</div>
-    </div>
+<body class="bg-school-grid text-slate-800 min-h-screen flex flex-col justify-between overflow-x-hidden relative selection:bg-amber-300 selection:text-amber-900">
+  
+  <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+    <div class="absolute -top-16 -left-16 w-80 h-80 bg-amber-200/45 rounded-full blur-3xl"></div>
+    <div class="absolute top-1/3 -right-20 w-96 h-96 bg-sky-200/55 rounded-full blur-3xl"></div>
+    <div class="absolute -bottom-16 left-1/4 w-80 h-80 bg-emerald-200/40 rounded-full blur-3xl"></div>
+    <!-- Floating School Emoticons in Background -->
+    <div class="absolute top-20 right-[12%] text-3xl opacity-25 select-none animate-float-school">🎈</div>
+    <div class="absolute bottom-24 left-[8%] text-3xl opacity-25 select-none animate-float-school" style="animation-delay: 1.5s;">✏️</div>
+    <div class="absolute top-1/2 left-[4%] text-3xl opacity-20 select-none animate-float-school" style="animation-delay: 2.2s;">📐</div>
+    <div class="absolute top-36 left-[18%] text-3xl opacity-25 select-none animate-float-school" style="animation-delay: 0.8s;">⭐</div>
   </div>
 
-  <div class="bins-zone">
-    <div class="drop-bin" data-type="less_one">
-      <div class="bin-icon">🪐</div>
-      <div class="bin-label">小於 1<br><span style="font-size:0.85rem;font-weight:normal;">(結果 &lt; 1)</span></div>
+  <div class="relative z-10 flex flex-col flex-grow max-w-5xl mx-auto w-full px-3 py-4 sm:px-6 sm:py-6">
+    
+    <!-- Cheerful School Header Bar -->
+    <header class="flex flex-wrap items-center justify-between gap-3 bg-white/95 backdrop-blur-md border-2 border-amber-200/90 px-5 py-3.5 rounded-3xl shadow-lg shadow-amber-100/70">
+      <div class="flex items-center gap-3.5">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-400 via-orange-400 to-rose-400 flex items-center justify-center text-2xl shadow-md shadow-orange-300/50 animate-float-school">
+          🎒
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl sm:text-2xl font-black tracking-wide text-amber-900 drop-shadow-sm">
+              小數點跳跳樂
+            </h1>
+            <span class="bg-rose-100 text-rose-600 text-xs font-bold px-2 py-0.5 rounded-full border border-rose-200">
+              校園版 🏫
+            </span>
+          </div>
+          <p class="text-xs text-slate-500 font-medium mt-0.5">
+            輕鬆掌握除以 10/100/1000（向左跳）與 0.1/0.01/0.001（向右跳）的魔法！
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5 bg-amber-100/80 p-1.5 rounded-2xl border border-amber-200 text-xs sm:text-sm font-bold">
+        <button id="tabChallenge" onclick="switchMode('challenge')" class="px-3.5 py-1.5 rounded-xl transition-all duration-200 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm hover:opacity-95">
+          🎯 跳躍闖關
+        </button>
+        <button id="tabSandbox" onclick="switchMode('sandbox')" class="px-3.5 py-1.5 rounded-xl transition-all duration-200 text-amber-800 hover:bg-amber-200/70">
+          🔬 歡樂實驗室
+        </button>
+        <button id="tabRules" onclick="switchMode('rules')" class="px-3.5 py-1.5 rounded-xl transition-all duration-200 text-amber-800 hover:bg-amber-200/70">
+          📜 口訣筆記本
+        </button>
+      </div>
+
+      <!-- Controls & Sound -->
+      <div class="flex items-center gap-2">
+        <button id="soundToggleBtn" onclick="toggleAudio()" class="w-10 h-10 flex items-center justify-center rounded-2xl bg-amber-100 hover:bg-amber-200 border-2 border-amber-200 text-amber-900 transition shadow-sm active:scale-95" title="音效切換">
+          <span id="soundIcon" class="text-lg">🔔</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="mt-4 flex-grow flex flex-col">
+      
+      <!-- =========================================================
+           MODE 1: CHALLENGE ARENA
+           ========================================================= -->
+      <section id="challengeView" class="flex flex-col gap-4">
+        
+        <!-- Cheerful Dashboard Counters (Score, Combo, Level, Hearts) -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="bg-white/90 border-2 border-sky-100 rounded-2xl p-3 flex items-center gap-3 shadow-md shadow-sky-100/50">
+            <div class="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center text-2xl">🌱</div>
+            <div>
+              <div class="text-[11px] font-bold text-sky-600">當前關卡</div>
+              <div id="diffDisplay" class="text-xs sm:text-sm font-black text-slate-800 truncate">階段一：除以整十整百</div>
+            </div>
+          </div>
+
+          <div class="bg-white/90 border-2 border-amber-100 rounded-2xl p-3 flex items-center gap-3 shadow-md shadow-amber-100/50">
+            <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-2xl">🔥</div>
+            <div>
+              <div class="text-[11px] font-bold text-amber-600">答對連擊</div>
+              <div id="comboDisplay" class="text-sm font-black text-amber-600">0 連擊</div>
+            </div>
+          </div>
+
+          <div class="bg-white/90 border-2 border-emerald-100 rounded-2xl p-3 flex items-center gap-3 shadow-md shadow-emerald-100/50">
+            <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-2xl">⭐</div>
+            <div>
+              <div class="text-[11px] font-bold text-emerald-600">集星星得分</div>
+              <div id="scoreDisplay" class="text-sm font-black text-emerald-700">0 分</div>
+            </div>
+          </div>
+
+          <div class="bg-white/90 border-2 border-rose-100 rounded-2xl p-3 flex items-center gap-3 shadow-md shadow-rose-100/50">
+            <div class="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center text-2xl">❤️</div>
+            <div>
+              <div class="text-[11px] font-bold text-rose-500">挑戰愛心</div>
+              <div id="livesDisplay" class="text-sm font-black text-rose-500 tracking-wider">❤️❤️❤️</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white border-4 border-amber-200/90 rounded-3xl p-5 sm:p-7 shadow-xl shadow-amber-200/40 relative overflow-hidden">
+          
+          <!-- Card Header & Hint Button -->
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.2 rounded-full bg-amber-100 border border-amber-300 text-amber-800 text-xs font-bold shadow-sm">
+              <span class="w-2.5 h-2.5 rounded-full bg-orange-500 animate-ping"></span>
+              課堂隨堂題 第 <span id="qIndex" class="text-orange-600 font-black">1</span> / 10 題
+            </div>
+            
+            <button onclick="toggleHintModal()" class="px-3 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-300 text-xs font-bold text-amber-800 flex items-center gap-1.5 transition">
+              <span>💡</span> 偷看課本口訣秘笈
+            </button>
+          </div>
+
+          <!-- The Arithmetic Expression on a friendly chalkboard badge -->
+          <div class="text-center my-3 sm:my-5">
+            <div class="text-xs sm:text-sm text-slate-500 font-bold mb-1.5">✍️ 請幫小數點找到正確跳躍位置：</div>
+            <div class="inline-flex items-center justify-center gap-3 sm:gap-4 bg-gradient-to-r from-amber-50 via-sky-50 to-amber-50 px-6 py-3 rounded-2xl border-2 border-amber-200 shadow-inner text-3xl sm:text-5xl font-mono-num font-black">
+              <span id="qOriginNumber" class="text-amber-800 drop-shadow-sm">345.6</span>
+              <span class="text-rose-500 font-bold">÷</span>
+              <span id="qDivisor" class="text-sky-700 bg-sky-100/90 px-3.5 py-0.5 rounded-xl border border-sky-300 shadow-sm">100</span>
+              <span class="text-slate-400">=</span>
+              <span class="text-orange-500 text-3xl sm:text-4xl animate-pulse">？</span>
+            </div>
+          </div>
+
+          <div class="mt-6 bg-gradient-to-b from-sky-50/70 to-amber-50/70 border-2 border-dashed border-sky-300 rounded-3xl p-4 sm:p-6 shadow-inner flex flex-col items-center">
+            
+            <div class="w-full flex items-center justify-between text-xs font-bold text-slate-500 mb-2 px-2">
+              <span class="flex items-center gap-1 text-sky-700 bg-sky-100 px-2 py-0.5 rounded-lg border border-sky-200">
+                ⬅ 向左跳（數值變小）
+              </span>
+              <span class="hidden sm:inline font-bold text-amber-900">
+                👆 點擊下方按鈕或直接點擊小圓點，讓小數點跳躍！
+              </span>
+              <span class="flex items-center gap-1 text-orange-700 bg-orange-100 px-2 py-0.5 rounded-lg border border-orange-200">
+                向右跳（數值變大） ➡
+              </span>
+            </div>
+
+            <!-- The Tape Grid for Digits and Slots -->
+            <div id="digitTapeWrapper" class="w-full overflow-x-auto py-3 flex justify-center items-center">
+              <div id="digitTape" class="flex items-center justify-center gap-1 sm:gap-2 px-4 py-2 font-mono-num text-2xl sm:text-4xl">
+                <!-- Dynamically injected campus digit cards -->
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-center gap-3 mt-3 w-full max-w-md">
+              <button onclick="stepDecimal(-1)" class="flex-1 py-3 px-4 rounded-2xl bg-white hover:bg-sky-50 active:scale-95 border-2 border-sky-300 text-sky-700 font-black text-sm flex items-center justify-center gap-2 shadow-sm transition">
+                <span class="text-lg">⬅</span> 向左移 1 位
+              </button>
+              
+              <button onclick="resetCurrentNumber()" class="py-3 px-3.5 rounded-2xl bg-white hover:bg-amber-100 active:scale-95 border-2 border-amber-300 text-amber-800 text-xs font-black transition shadow-sm" title="重置回題目原本位置">
+                🔄 回原位
+              </button>
+              
+              <button onclick="stepDecimal(1)" class="flex-1 py-3 px-4 rounded-2xl bg-white hover:bg-orange-50 active:scale-95 border-2 border-orange-300 text-orange-700 font-black text-sm flex items-center justify-center gap-2 shadow-sm transition">
+                向右移 1 位 <span class="text-lg">➡</span>
+              </button>
+            </div>
+
+            <!-- Current Jump State Hint -->
+            <div id="jumpDeltaStatus" class="text-xs text-slate-600 mt-2.5 font-bold">
+              當前小數點移動：<span class="text-amber-800 bg-white px-2 py-0.5 rounded-md border border-amber-200">原地未動 (0 位)</span>
+            </div>
+          </div>
+
+          <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t-2 border-dashed border-amber-100">
+            <div class="text-center sm:text-left">
+              <div class="text-xs font-bold text-slate-500">當前擺出的小數結果：</div>
+              <div id="currentValueDisplay" class="text-3xl sm:text-4xl font-mono-num font-black text-amber-900 tracking-wider">
+                345.6
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+              <button id="confirmAnswerBtn" onclick="submitAnswer()" class="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white font-black text-base tracking-wider shadow-lg shadow-emerald-200 active:scale-95 transition">
+                🎒 寫入作業簿 (送出解答)
+              </button>
+            </div>
+          </div>
+
+          <!-- In-card Feedback notification -->
+          <div id="feedbackBox" class="hidden mt-4 p-4 rounded-2xl text-sm font-semibold transition-all duration-300"></div>
+
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div class="bg-sky-50 border-2 border-sky-200 rounded-2xl p-4 flex items-center gap-3.5 shadow-sm">
+            <div class="w-10 h-10 rounded-xl bg-sky-200/90 text-sky-800 flex items-center justify-center font-black text-sm">÷ 10ⁿ</div>
+            <div class="text-xs text-slate-700 leading-relaxed">
+              <strong class="text-sky-800 font-bold">除以 10, 100, 1000</strong>：平分變小！<br>
+              有幾個 0 就<span class="text-sky-700 font-black bg-sky-100 px-1 py-0.5 rounded border border-sky-200">「向左跳幾位 ⬅」</span>。
+            </div>
+          </div>
+          <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 flex items-center gap-3.5 shadow-sm">
+            <div class="w-10 h-10 rounded-xl bg-amber-200/90 text-amber-800 flex items-center justify-center font-black text-sm">÷ 0.1ⁿ</div>
+            <div class="text-xs text-slate-700 leading-relaxed">
+              <strong class="text-amber-800 font-bold">除以 0.1, 0.01, 0.001</strong>：反向乘大！<br>
+              幾位小數就<span class="text-orange-700 font-black bg-orange-100 px-1 py-0.5 rounded border border-orange-200">「向右跳幾位 ➡」</span>。
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- =========================================================
+           MODE 2: SANDBOX LABORATORY (歡樂實驗室)
+           ========================================================= -->
+      <section id="sandboxView" class="hidden flex-col gap-4">
+        
+        <div class="bg-white border-4 border-emerald-200 rounded-3xl p-6 sm:p-8 shadow-xl shadow-emerald-100/60">
+          <div class="text-center max-w-xl mx-auto mb-6">
+            <div class="inline-block p-3 bg-emerald-100 rounded-2xl text-3xl mb-2">🔬</div>
+            <h2 class="text-2xl font-black text-emerald-900 mb-1">
+              小數點趣味實驗室
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-500 font-medium">
+              輸入你喜歡的數字，按按看不同的除法按鈕，親眼看看小數點是怎麼蹦蹦跳跳的！
+            </p>
+          </div>
+
+          <!-- Input Custom Number -->
+          <div class="max-w-md mx-auto mb-7">
+            <label class="block text-xs font-black text-slate-600 mb-2 text-center">
+              ✏️ 請輸入初始數字（例：45.8、7、0.25、120）：
+            </label>
+            <div class="flex gap-2">
+              <input id="customNumberInput" type="number" step="any" value="45.8" class="flex-1 bg-amber-50/60 border-2 border-amber-300 rounded-2xl px-4 py-3 text-xl font-mono-num font-black text-center text-amber-900 focus:outline-none focus:border-emerald-500 shadow-inner">
+              <button onclick="setSandboxFromInput()" class="px-6 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-sm shadow-md shadow-emerald-200 active:scale-95 transition">
+                載入數值
+              </button>
+            </div>
+          </div>
+
+          <!-- Divisor Operator Launchers -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto mb-6">
+            <!-- Left shift group -->
+            <div class="bg-sky-50/80 border-2 border-sky-200 rounded-2xl p-4">
+              <div class="text-xs font-black text-sky-800 mb-2.5 flex items-center justify-between">
+                <span>◀ 小數點向左跳（數字變小）</span>
+                <span class="text-[10px] bg-sky-200 text-sky-900 px-2 py-0.5 rounded-md font-bold">除以整十整百</span>
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                <button onclick="runSandboxOperation(10)" class="py-2.5 rounded-xl bg-white hover:bg-sky-100/70 border-2 border-sky-300 text-sky-800 font-black font-mono-num active:scale-95 transition shadow-sm">
+                  ÷ 10<br><span class="text-[10px] text-slate-500 font-sans">左跳 1 格</span>
+                </button>
+                <button onclick="runSandboxOperation(100)" class="py-2.5 rounded-xl bg-white hover:bg-sky-100/70 border-2 border-sky-300 text-sky-800 font-black font-mono-num active:scale-95 transition shadow-sm">
+                  ÷ 100<br><span class="text-[10px] text-slate-500 font-sans">左跳 2 格</span>
+                </button>
+                <button onclick="runSandboxOperation(1000)" class="py-2.5 rounded-xl bg-white hover:bg-sky-100/70 border-2 border-sky-300 text-sky-800 font-black font-mono-num active:scale-95 transition shadow-sm">
+                  ÷ 1000<br><span class="text-[10px] text-slate-500 font-sans">左跳 3 格</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Right shift group -->
+            <div class="bg-amber-50/80 border-2 border-amber-200 rounded-2xl p-4">
+              <div class="text-xs font-black text-amber-800 mb-2.5 flex items-center justify-between">
+                <span>小數點向右跳（數字變大） ▶</span>
+                <span class="text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded-md font-bold">除以純小數</span>
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                <button onclick="runSandboxOperation(0.1)" class="py-2.5 rounded-xl bg-white hover:bg-amber-100/70 border-2 border-amber-300 text-amber-800 font-black font-mono-num active:scale-95 transition shadow-sm">
+                  ÷ 0.1<br><span class="text-[10px] text-slate-500 font-sans">右跳 1 格</span>
+                </button>
+                <button onclick="runSandboxOperation(0.01)" class="py-2.5 rounded-xl bg-white hover:bg-amber-100/70 border-2 border-amber-300 text-amber-800 font-black font-mono-num active:scale-95 transition shadow-sm">
+                  ÷ 0.01<br><span class="text-[10px] text-slate-500 font-sans">右跳 2 格</span>
+                </button>
+                <button onclick="runSandboxOperation(0.001)" class="py-2.5 rounded-xl bg-white hover:bg-amber-100/70 border-2 border-amber-300 text-amber-800 font-black font-mono-num active:scale-95 transition shadow-sm">
+                  ÷ 0.001<br><span class="text-[10px] text-slate-500 font-sans">右跳 3 格</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-gradient-to-r from-amber-50 via-white to-sky-50 border-2 border-amber-200 rounded-2xl p-6 text-center shadow-inner">
+            <div class="text-xs font-bold text-slate-500 mb-2">動態跳躍軌道演示板</div>
+            <div id="sandboxAnimStage" class="py-4 flex items-center justify-center font-mono-num text-3xl sm:text-5xl font-black min-h-[90px] overflow-x-auto text-slate-800">
+              <!-- Dynamically populated -->
+            </div>
+            <div id="sandboxExplanation" class="text-xs sm:text-sm font-bold text-emerald-800 mt-2 p-3 bg-white/90 border border-emerald-200 rounded-xl inline-block max-w-xl shadow-sm">
+              💡 點擊上方的按鈕，體驗小數點躍遷過程！
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- =========================================================
+           MODE 3: RULES NOTEBOOK (口訣筆記本)
+           ========================================================= -->
+      <section id="rulesView" class="hidden flex-col gap-4">
+        
+        <div class="bg-white border-4 border-amber-200 rounded-3xl p-6 sm:p-8 shadow-xl shadow-amber-100/70">
+          <div class="text-center max-w-2xl mx-auto mb-6">
+            <div class="inline-block p-3 bg-amber-100 rounded-2xl text-3xl mb-2">📖</div>
+            <h2 class="text-2xl font-black text-amber-900 mb-1">
+              小數點移動魔法口訣手冊
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-500 font-medium">
+              只要掌握「除大數變小往左、除純小數反大往右」的原則，考試算術滿分不用愁！
+            </p>
+          </div>
+
+          <!-- Two Big Rule Note Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5 my-4">
+            
+            <!-- Rule Card 1 -->
+            <div class="bg-sky-50/70 border-2 border-sky-300 rounded-2xl p-5 relative">
+              <div class="w-10 h-10 rounded-xl bg-sky-200 text-sky-800 flex items-center justify-center text-xl font-bold mb-3">
+                ⬅
+              </div>
+              <h3 class="text-base font-black text-sky-900 mb-1.5">秘訣一：除以 10, 100, 1000</h3>
+              <p class="text-xs text-slate-600 mb-3 leading-relaxed">
+                把東西平分給很多人，每人分到的<strong>數值會變小</strong>！
+              </p>
+              <div class="bg-white rounded-xl p-3.5 border border-sky-200 space-y-2 text-xs font-mono-num shadow-sm">
+                <div class="flex justify-between items-center text-slate-700">
+                  <span class="font-bold text-sky-800">÷ 10 (1 個 0)</span>
+                  <span class="font-sans font-black text-sky-600">向左跳 1 位</span>
+                </div>
+                <div class="flex justify-between items-center text-slate-700">
+                  <span class="font-bold text-sky-800">÷ 100 (2 個 0)</span>
+                  <span class="font-sans font-black text-sky-600">向左跳 2 位</span>
+                </div>
+                <div class="flex justify-between items-center text-slate-700">
+                  <span class="font-bold text-sky-800">÷ 1000 (3 個 0)</span>
+                  <span class="font-sans font-black text-sky-600">向左跳 3 位</span>
+                </div>
+              </div>
+              <div class="mt-3 text-xs text-sky-900 bg-sky-100/90 p-2.5 rounded-xl border border-sky-200">
+                🔔 <strong class="text-sky-800">小提醒：</strong>向左跳如果位數不夠，記得在整數部分補 <strong>0</strong>（例：5.2 ÷ 100 = 0.052）。
+              </div>
+            </div>
+
+            <!-- Rule Card 2 -->
+            <div class="bg-amber-50/70 border-2 border-amber-300 rounded-2xl p-5 relative">
+              <div class="w-10 h-10 rounded-xl bg-amber-200 text-amber-800 flex items-center justify-center text-xl font-bold mb-3">
+                ➡
+              </div>
+              <h3 class="text-base font-black text-amber-900 mb-1.5">秘訣二：除以 0.1, 0.01, 0.001</h3>
+              <p class="text-xs text-slate-600 mb-3 leading-relaxed">
+                除以純小數，等於乘以它的倒數，<strong>數值會變大</strong>！
+              </p>
+              <div class="bg-white rounded-xl p-3.5 border border-amber-200 space-y-2 text-xs font-mono-num shadow-sm">
+                <div class="flex justify-between items-center text-slate-700">
+                  <span class="font-bold text-amber-800">÷ 0.1 (一位小數)</span>
+                  <span class="font-sans font-black text-orange-600">向右跳 1 位（相當於 × 10）</span>
+                </div>
+                <div class="flex justify-between items-center text-slate-700">
+                  <span class="font-bold text-amber-800">÷ 0.01 (兩位小數)</span>
+                  <span class="font-sans font-black text-orange-600">向右跳 2 位（相當於 × 100）</span>
+                </div>
+                <div class="flex justify-between items-center text-slate-700">
+                  <span class="font-bold text-amber-800">÷ 0.001 (三位小數)</span>
+                  <span class="font-sans font-black text-orange-600">向右跳 3 位（相當於 × 1000）</span>
+                </div>
+              </div>
+              <div class="mt-3 text-xs text-amber-900 bg-amber-100/90 p-2.5 rounded-xl border border-amber-200">
+                🔔 <strong class="text-amber-800">小提醒：</strong>向右跳如果超出小數位數，在數字後面補 <strong>0</strong>（例：3.5 ÷ 0.01 = 350）。
+              </div>
+            </div>
+
+          </div>
+
+          <div class="overflow-x-auto rounded-2xl border-2 border-amber-200 mt-4">
+            <table class="w-full text-xs text-left text-slate-700">
+              <thead class="text-xs bg-amber-100/90 text-amber-900 font-black">
+                <tr>
+                  <th class="px-4 py-3">運算子</th>
+                  <th class="px-4 py-3">等效乘法</th>
+                  <th class="px-4 py-3">小數點方向</th>
+                  <th class="px-4 py-3">跳躍格數</th>
+                  <th class="px-4 py-3">範例（原數 4.8）</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-amber-100 font-mono-num bg-white">
+                <tr class="hover:bg-sky-50/50">
+                  <td class="px-4 py-2.5 font-bold text-sky-700">÷ 10</td>
+                  <td class="px-4 py-2.5 font-sans text-slate-500">× 1/10</td>
+                  <td class="px-4 py-2.5 font-sans font-bold text-sky-700">⬅ 向左（變小）</td>
+                  <td class="px-4 py-2.5">1 格</td>
+                  <td class="px-4 py-2.5 font-bold text-amber-800">0.48</td>
+                </tr>
+                <tr class="hover:bg-sky-50/50">
+                  <td class="px-4 py-2.5 font-bold text-sky-700">÷ 100</td>
+                  <td class="px-4 py-2.5 font-sans text-slate-500">× 1/100</td>
+                  <td class="px-4 py-2.5 font-sans font-bold text-sky-700">⬅ 向左（變小）</td>
+                  <td class="px-4 py-2.5">2 格</td>
+                  <td class="px-4 py-2.5 font-bold text-amber-800">0.048</td>
+                </tr>
+                <tr class="hover:bg-sky-50/50">
+                  <td class="px-4 py-2.5 font-bold text-sky-700">÷ 1000</td>
+                  <td class="px-4 py-2.5 font-sans text-slate-500">× 1/1000</td>
+                  <td class="px-4 py-2.5 font-sans font-bold text-sky-700">⬅ 向左（變小）</td>
+                  <td class="px-4 py-2.5">3 格</td>
+                  <td class="px-4 py-2.5 font-bold text-amber-800">0.0048</td>
+                </tr>
+                <tr class="hover:bg-amber-50/50">
+                  <td class="px-4 py-2.5 font-bold text-orange-600">÷ 0.1</td>
+                  <td class="px-4 py-2.5 font-sans text-emerald-700 font-bold">× 10</td>
+                  <td class="px-4 py-2.5 font-sans font-bold text-orange-700">向右（變大） ➡</td>
+                  <td class="px-4 py-2.5">1 格</td>
+                  <td class="px-4 py-2.5 font-bold text-sky-800">48</td>
+                </tr>
+                <tr class="hover:bg-amber-50/50">
+                  <td class="px-4 py-2.5 font-bold text-orange-600">÷ 0.01</td>
+                  <td class="px-4 py-2.5 font-sans text-emerald-700 font-bold">× 100</td>
+                  <td class="px-4 py-2.5 font-sans font-bold text-orange-700">向右（變大） ➡</td>
+                  <td class="px-4 py-2.5">2 格</td>
+                  <td class="px-4 py-2.5 font-bold text-sky-800">480</td>
+                </tr>
+                <tr class="hover:bg-amber-50/50">
+                  <td class="px-4 py-2.5 font-bold text-orange-600">÷ 0.001</td>
+                  <td class="px-4 py-2.5 font-sans text-emerald-700 font-bold">× 1000</td>
+                  <td class="px-4 py-2.5 font-sans font-bold text-orange-700">向右（變大） ➡</td>
+                  <td class="px-4 py-2.5">3 格</td>
+                  <td class="px-4 py-2.5 font-bold text-sky-800">4800</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- Hint Modal Dialog -->
+    <div id="hintModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+      <div class="bg-white border-4 border-amber-300 rounded-3xl max-w-md w-full p-6 shadow-2xl">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">🎒</span>
+            <h3 class="text-lg font-black text-amber-900">課堂速記小錦囊</h3>
+          </div>
+          <button onclick="toggleHintModal()" class="w-8 h-8 flex items-center justify-center rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold">✕</button>
+        </div>
+        <div class="space-y-3 text-xs text-slate-700">
+          <div class="p-3.5 bg-sky-50 rounded-2xl border-2 border-sky-200">
+            <div class="font-bold text-sky-800 mb-1">【除以 10, 100, 1000】向左跳 ⬅</div>
+            <p>代表數值變小。10 有 1 個 0 跳 1 位；100 有 2 個 0 跳 2 位；1000 有 3 個 0 跳 3 位。</p>
+          </div>
+          <div class="p-3.5 bg-amber-50 rounded-2xl border-2 border-amber-200">
+            <div class="font-bold text-amber-800 mb-1">【除以 0.1, 0.01, 0.001】向右跳 ➡</div>
+            <p>除以小數等於變大！0.1 是 1 位小數跳 1 位；0.01 是 2 位小數跳 2 位；0.001 是 3 位小數跳 3 位。</p>
+          </div>
+        </div>
+        <button onclick="toggleHintModal()" class="mt-5 w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 font-black text-white text-xs shadow-md shadow-amber-200 transition">
+          我記住了，繼續答題！
+        </button>
+      </div>
     </div>
-    <div class="drop-bin" data-type="one_to_two">
-      <div class="bin-icon">🚀</div>
-      <div class="bin-label">介於 1 與 2<br><span style="font-size:0.85rem;font-weight:normal;">(1 &le; 結果 &le; 2)</span></div>
+
+    <!-- Game Over / Victory Modal -->
+    <div id="resultModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+      <div class="bg-white border-4 border-amber-300 rounded-3xl max-w-md w-full p-6 sm:p-8 text-center shadow-2xl">
+        <div id="modalIcon" class="text-6xl mb-3 animate-bounce">🏆</div>
+        <h3 id="modalTitle" class="text-2xl font-black text-amber-900 mb-2">闖關成功！</h3>
+        <p id="modalDesc" class="text-xs sm:text-sm text-slate-600 mb-6 leading-relaxed">
+          你已經徹底征服了小數點跳躍規律，成為真正的校園心算小博士！
+        </p>
+
+        <!-- Stats breakdown -->
+        <div class="bg-amber-50 rounded-2xl p-4 border-2 border-amber-200 mb-6 grid grid-cols-2 gap-3 text-left font-mono-num">
+          <div>
+            <div class="text-[11px] font-bold text-slate-500">最終獲得星星</div>
+            <div id="finalScore" class="text-2xl font-black text-emerald-600">1200</div>
+          </div>
+          <div>
+            <div class="text-[11px] font-bold text-slate-500">最高連擊次數</div>
+            <div id="finalCombo" class="text-2xl font-black text-amber-600">10 COMBO</div>
+          </div>
+        </div>
+
+        <button onclick="restartGame()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 font-black text-white text-sm shadow-lg shadow-orange-200 active:scale-95 transition">
+          🎒 再玩一輪！
+        </button>
+      </div>
     </div>
-    <div class="drop-bin" data-type="greater_two">
-      <div class="bin-icon">⭐</div>
-      <div class="bin-label">大於 2<br><span style="font-size:0.85rem;font-weight:normal;">(結果 &gt; 2)</span></div>
-    </div>
+
+    <!-- Footer -->
+    <footer class="mt-6 text-center text-xs text-slate-500 py-2 font-medium">
+      🏫 快樂學習小數點：除以 10 / 100 / 1000 ⬅ 數值變小 | 除以 0.1 / 0.01 / 0.001 ➡ 數值變大
+    </footer>
+
   </div>
-</div>
 
-<div class="modal-overlay" id="hint-overlay">
-  <div class="hint-modal">
-    <div class="hint-title">💡 宇航計算助手：步驟拆解</div>
-    <div id="hint-content"></div>
-    <button class="modal-btn" onclick="closeHint()">明白了，繼續挑戰！</button>
-  </div>
-</div>
+  <script>
+    /* =========================================================
+       AUDIO SYNTHESIZER (Campus Bell & Marimba Tones)
+       ========================================================= */
+    let audioCtx = null;
+    let soundEnabled = true;
 
-<div class="modal-overlay" id="result-overlay">
-  <div class="result-modal">
-    <h2>🎉 太空任務完成！</h2>
-    <div class="stars" id="star-rating">⭐⭐⭐</div>
-    <p style="font-size:1.2rem; margin-bottom: 10px;">最終得分：<strong id="final-score" style="color:var(--pink-dark)">0</strong></p>
-    <p id="feedback-text" style="color:#666; margin-bottom: 20px;">表現非常出色！</p>
-    <button class="modal-btn" onclick="restartGame()">🚀 再玩一次</button>
-  </div>
-</div>
-
-<canvas id="confetti-canvas"></canvas>
-
-<script>
-/* ---------------- 全域音效引擎 (Web Audio API) ---------------- */
-class SoundFx {
-  constructor() {
-    this.ctx = null;
-  }
-  init() {
-    if (!this.ctx) {
-      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+          audioCtx = new AudioContext();
+        }
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
     }
-  }
-  playCorrect() {
-    this.init();
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(523.25, now); // C5
-    osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.15); // G5
-    gain.gain.setValueAtTime(0.3, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.3);
-  }
-  playWrong() {
-    this.init();
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(220, now);
-    osc.frequency.exponentialRampToValueAtTime(140, now + 0.25);
-    gain.gain.setValueAtTime(0.3, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.25);
-  }
-  playWin() {
-    this.init();
-    [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
-      const now = this.ctx.currentTime + i * 0.1;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(freq, now);
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.25);
+
+    function toggleAudio() {
+      soundEnabled = !soundEnabled;
+      const icon = document.getElementById('soundIcon');
+      if (icon) {
+        icon.textContent = soundEnabled ? '🔔' : '🔕';
+      }
+    }
+
+    // Play cheerful synthesized chimes
+    function playSound(type) {
+      if (!soundEnabled) return;
+      initAudio();
+      if (!audioCtx) return;
+
+      try {
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        if (type === 'step-left') {
+          // Warm chime going left
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(550, now);
+          osc.frequency.exponentialRampToValueAtTime(380, now + 0.12);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+          osc.start(now);
+          osc.stop(now + 0.12);
+        } else if (type === 'step-right') {
+          // Cheerful chime going right
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(380, now);
+          osc.frequency.exponentialRampToValueAtTime(620, now + 0.12);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+          osc.start(now);
+          osc.stop(now + 0.12);
+        } else if (type === 'correct') {
+          // Happy classroom xylophone fanfare
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(523.25, now); // C5
+          osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+          osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
+          osc.frequency.setValueAtTime(1046.50, now + 0.24); // C6
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+          osc.start(now);
+          osc.stop(now + 0.45);
+        } else if (type === 'wrong') {
+          // Gentle boing
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.exponentialRampToValueAtTime(140, now + 0.25);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        } else if (type === 'reset') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(440, now);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+          osc.start(now);
+          osc.stop(now + 0.08);
+        }
+      } catch (e) {
+        console.warn("Audio play issue", e);
+      }
+    }
+
+    /* =========================================================
+       STREAMING_CHUNK:Defining game logic state and question generators
+       ========================================================= */
+    const TOTAL_QUESTIONS = 10;
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let combo = 0;
+    let maxCombo = 0;
+    let lives = 3;
+    let isAnsweringLocked = false;
+
+    let currentProblem = null;
+    let currentDeltaShift = 0;
+
+    const DIVISORS_TIER1 = [10, 100, 1000];
+    const DIVISORS_TIER2 = [0.1, 0.01, 0.001];
+    const ALL_DIVISORS = [10, 100, 1000, 0.1, 0.01, 0.001];
+
+    const SEED_NUMBERS = [
+      "45.8", "3.14", "125", "6.2", "0.75", "890", "5.43", "78.2", "12.04", "0.9", "400", "1.25"
+    ];
+
+    function getRandomItem(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function createProblem(qIdx) {
+      let divisor;
+      let diffLabel = "階段一：除以整十整百 (向左移)";
+      
+      if (qIdx < 3) {
+        divisor = getRandomItem(DIVISORS_TIER1);
+        diffLabel = "階段一：除以 10 / 100 / 1000 (向左跳)";
+      } else if (qIdx < 6) {
+        divisor = getRandomItem(DIVISORS_TIER2);
+        diffLabel = "階段二：除以 0.1 / 0.01 / 0.001 (向右跳)";
+      } else {
+        divisor = getRandomItem(ALL_DIVISORS);
+        diffLabel = "階段三：全能心算綜合挑戰！";
+      }
+
+      const baseStr = getRandomItem(SEED_NUMBERS);
+      const targetData = calculateExpectedShift(baseStr, divisor);
+
+      return {
+        baseStr: baseStr,
+        divisor: divisor,
+        targetShift: targetData.shift,
+        targetStr: targetData.resultStr,
+        explanation: targetData.explanation,
+        diffLabel: diffLabel
+      };
+    }
+
+    /* =========================================================
+       STREAMING_CHUNK:Mathematical string shifting logic without float errors
+       ========================================================= */
+    function calculateExpectedShift(numStr, divisor) {
+      let shift = 0;
+      let exp = "";
+      if (divisor === 10) {
+        shift = -1;
+        exp = "除以 10 有 1 個 0，小數點向左跳 1 格（數字變小）";
+      } else if (divisor === 100) {
+        shift = -2;
+        exp = "除以 100 有 2 個 0，小數點向左跳 2 格（數字變小）";
+      } else if (divisor === 1000) {
+        shift = -3;
+        exp = "除以 1000 有 3 個 0，小數點向左跳 3 格（數字變小）";
+      } else if (divisor === 0.1) {
+        shift = 1;
+        exp = "除以 0.1 等同於乘以 10，小數點向右跳 1 格（數字變大）";
+      } else if (divisor === 0.01) {
+        shift = 2;
+        exp = "除以 0.01 等同於乘以 100，小數點向右跳 2 格（數字變大）";
+      } else if (divisor === 0.001) {
+        shift = 3;
+        exp = "除以 0.001 等同於乘以 1000，小數點向右跳 3 格（數字變大）";
+      }
+
+      const resultStr = applyDecimalShift(numStr, shift);
+      return {
+        shift: shift,
+        resultStr: resultStr,
+        explanation: exp
+      };
+    }
+
+    function applyDecimalShift(str, shift) {
+      let [intPart, decPart] = str.split('.');
+      if (!decPart) decPart = "";
+
+      let digits = intPart + decPart;
+      let dotIndex = intPart.length;
+      let newDotIndex = dotIndex + shift;
+
+      if (newDotIndex <= 0) {
+        let neededLeadingZeros = Math.abs(newDotIndex);
+        let result = "0." + "0".repeat(neededLeadingZeros) + digits;
+        return cleanTrailingZeros(result);
+      } else if (newDotIndex >= digits.length) {
+        let neededTrailingZeros = newDotIndex - digits.length;
+        let result = digits + "0".repeat(neededTrailingZeros);
+        return cleanLeadingZeros(result);
+      } else {
+        let result = digits.slice(0, newDotIndex) + "." + digits.slice(newDotIndex);
+        return cleanTrailingZeros(cleanLeadingZeros(result));
+      }
+    }
+
+    function cleanTrailingZeros(numStr) {
+      if (!numStr.includes('.')) return numStr;
+      let [i, d] = numStr.split('.');
+      d = d.replace(/0+$/, '');
+      return d.length > 0 ? `${i}.${d}` : i;
+    }
+
+    function cleanLeadingZeros(numStr) {
+      if (numStr.includes('.')) {
+        let [i, d] = numStr.split('.');
+        i = i.replace(/^0+(?=\d)/, '');
+        if (i === "") i = "0";
+        return `${i}.${d}`;
+      } else {
+        let res = numStr.replace(/^0+(?=\d)/, '');
+        return res === "" ? "0" : res;
+      }
+    }
+
+    /* =========================================================
+       STREAMING_CHUNK:Rendering cheerful campus digit cards and bouncy dot
+       ========================================================= */
+    let tapeDigits = [];
+    let activeDotIndex = 0;
+    let baseDotIndex = 0;
+
+    function loadProblem(p) {
+      currentProblem = p;
+      currentDeltaShift = 0;
+
+      document.getElementById('qIndex').textContent = (currentQuestionIndex + 1);
+      document.getElementById('qOriginNumber').textContent = p.baseStr;
+      document.getElementById('qDivisor').textContent = p.divisor;
+      document.getElementById('diffDisplay').textContent = p.diffLabel;
+
+      hideFeedback();
+      setupDigitTape(p.baseStr);
+      updateDisplayValues();
+    }
+
+    function setupDigitTape(baseStr) {
+      let [intPart, decPart] = baseStr.split('.');
+      if (!decPart) decPart = "";
+
+      const LEFT_PADDING = 4;
+      const RIGHT_PADDING = 4;
+
+      tapeDigits = [];
+      for (let i = 0; i < LEFT_PADDING; i++) tapeDigits.push('0');
+      for (let ch of intPart) tapeDigits.push(ch);
+      for (let ch of decPart) tapeDigits.push(ch);
+      for (let i = 0; i < RIGHT_PADDING; i++) tapeDigits.push('0');
+
+      baseDotIndex = LEFT_PADDING + intPart.length;
+      activeDotIndex = baseDotIndex;
+      currentDeltaShift = 0;
+
+      renderTape();
+    }
+
+    function renderTape() {
+      const container = document.getElementById('digitTape');
+      container.innerHTML = '';
+
+      for (let i = 0; i < tapeDigits.length; i++) {
+        // Cheerful school number card
+        const digitDiv = document.createElement('div');
+        digitDiv.className = "w-9 h-14 sm:w-12 sm:h-18 flex items-center justify-center font-mono-num font-black rounded-2xl border-2 transition-all shadow-sm select-none";
+        
+        const d = tapeDigits[i];
+        digitDiv.textContent = d;
+        if (d === '0') {
+          digitDiv.classList.add('text-slate-300', 'bg-white', 'border-slate-200');
+        } else {
+          digitDiv.classList.add('text-amber-900', 'bg-amber-100', 'border-amber-300', 'shadow-amber-100');
+        }
+        container.appendChild(digitDiv);
+
+        // Dot insertion slot
+        if (i < tapeDigits.length - 1) {
+          const slot = document.createElement('div');
+          slot.className = "w-3.5 sm:w-5 flex items-end justify-center pb-2 cursor-pointer";
+          slot.onclick = () => {
+            const shift = (i + 1) - baseDotIndex;
+            setDecimalToShift(shift);
+          };
+
+          if (activeDotIndex === i + 1) {
+            // Cheerful cherry bouncing dot
+            const dot = document.createElement('div');
+            dot.className = "w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-rose-500 animate-bouncy-dot border-2 border-white ring-4 ring-rose-200 shadow-md";
+            slot.appendChild(dot);
+          } else {
+            // Subtle dotted target slot
+            const dotPlaceholder = document.createElement('div');
+            dotPlaceholder.className = "w-2 h-2 rounded-full bg-slate-300 hover:bg-rose-400 hover:scale-125 transition";
+            slot.appendChild(dotPlaceholder);
+          }
+          container.appendChild(slot);
+        }
+      }
+
+      updateStatusTexts();
+    }
+
+    function stepDecimal(direction) {
+      if (isAnsweringLocked) return;
+      const targetShift = currentDeltaShift + direction;
+      if (Math.abs(targetShift) > 3) return;
+      setDecimalToShift(targetShift);
+      playSound(direction < 0 ? 'step-left' : 'step-right');
+    }
+
+    function setDecimalToShift(shift) {
+      if (isAnsweringLocked) return;
+      if (Math.abs(shift) > 4) return;
+      currentDeltaShift = shift;
+      activeDotIndex = baseDotIndex + shift;
+      renderTape();
+      updateDisplayValues();
+    }
+
+    function resetCurrentNumber() {
+      if (isAnsweringLocked) return;
+      currentDeltaShift = 0;
+      activeDotIndex = baseDotIndex;
+      renderTape();
+      updateDisplayValues();
+      playSound('reset');
+    }
+
+    function getFormedValueString() {
+      const rawDigits = tapeDigits.join('');
+      const before = rawDigits.slice(0, activeDotIndex);
+      const after = rawDigits.slice(activeDotIndex);
+
+      let full = before + "." + after;
+      return cleanTrailingZeros(cleanLeadingZeros(full));
+    }
+
+    function updateDisplayValues() {
+      const val = getFormedValueString();
+      const valDisplay = document.getElementById('currentValueDisplay');
+      if (valDisplay) {
+        valDisplay.textContent = val;
+      }
+    }
+
+    function updateStatusTexts() {
+      const status = document.getElementById('jumpDeltaStatus');
+      if (!status) return;
+
+      if (currentDeltaShift === 0) {
+        status.innerHTML = `當前小數點移動：<span class="text-amber-800 bg-white px-2 py-0.5 rounded-md border border-amber-200">原地未動 (0 位)</span>`;
+      } else if (currentDeltaShift < 0) {
+        status.innerHTML = `當前小數點移動：<span class="text-sky-800 bg-sky-100 px-2.5 py-0.5 rounded-lg border border-sky-300 font-black">向左跳躍 ${Math.abs(currentDeltaShift)} 位 ⬅（變小）</span>`;
+      } else {
+        status.innerHTML = `當前小數點移動：<span class="text-orange-800 bg-orange-100 px-2.5 py-0.5 rounded-lg border border-orange-300 font-black">向右跳躍 ${currentDeltaShift} 位 ➡（變大）</span>`;
+      }
+    }
+
+    /* =========================================================
+       STREAMING_CHUNK:Managing student answer validation and scoring
+       ========================================================= */
+    function showFeedback(isCorrect, message) {
+      const box = document.getElementById('feedbackBox');
+      box.className = isCorrect 
+        ? "mt-4 p-4 rounded-2xl text-sm font-bold bg-emerald-50 border-2 border-emerald-300 text-emerald-900 flex items-center gap-3 animate-fade-in shadow-sm"
+        : "mt-4 p-4 rounded-2xl text-sm font-bold bg-rose-50 border-2 border-rose-300 text-rose-900 flex items-center gap-3 animate-fade-in shadow-sm";
+      
+      const icon = isCorrect ? '🎉' : '💡';
+      box.innerHTML = `<span class="text-2xl">${icon}</span><div>${message}</div>`;
+      box.classList.remove('hidden');
+    }
+
+    function hideFeedback() {
+      const box = document.getElementById('feedbackBox');
+      box.classList.add('hidden');
+    }
+
+    function submitAnswer() {
+      if (isAnsweringLocked) return;
+
+      const userVal = getFormedValueString();
+      const targetVal = currentProblem.targetStr;
+      const isCorrect = (userVal === targetVal) || (currentDeltaShift === currentProblem.targetShift);
+
+      isAnsweringLocked = true;
+
+      if (isCorrect) {
+        playSound('correct');
+        combo++;
+        if (combo > maxCombo) maxCombo = combo;
+        
+        const comboBonus = (combo > 1) ? (combo * 15) : 0;
+        const earned = 100 + comboBonus;
+        score += earned;
+
+        if (typeof confetti === 'function') {
+          confetti({
+            particleCount: 50,
+            spread: 70,
+            origin: { y: 0.65 }
+          });
+        }
+
+        showFeedback(true, `
+          <strong class="text-emerald-800 text-base">太棒了！答對了！⭐</strong><br>
+          <span class="text-xs text-emerald-700 font-semibold">
+            ${currentProblem.baseStr} ÷ ${currentProblem.divisor} = <strong>${targetVal}</strong><br>
+            規律筆記：${currentProblem.explanation}（+${earned} 星星積分）
+          </span>
+        `);
+
+        updateStatsUI();
+
+        setTimeout(() => {
+          advanceToNextQuestion();
+        }, 1800);
+
+      } else {
+        playSound('wrong');
+        combo = 0;
+        lives--;
+
+        updateStatsUI();
+
+        showFeedback(false, `
+          <strong class="text-rose-800 text-base">差一點點！位置跳錯囉～</strong><br>
+          <span class="text-xs text-rose-700 font-semibold">
+            正確答案是：<strong>${targetVal}</strong><br>
+            重要口訣：${currentProblem.explanation}
+          </span>
+        `);
+
+        if (lives <= 0) {
+          setTimeout(() => {
+            endGame(false);
+          }, 2000);
+        } else {
+          setTimeout(() => {
+            advanceToNextQuestion();
+          }, 2600);
+        }
+      }
+    }
+
+    function advanceToNextQuestion() {
+      currentQuestionIndex++;
+      if (currentQuestionIndex >= TOTAL_QUESTIONS) {
+        endGame(true);
+      } else {
+        isAnsweringLocked = false;
+        loadProblem(createProblem(currentQuestionIndex));
+      }
+    }
+
+    function updateStatsUI() {
+      document.getElementById('scoreDisplay').textContent = `${score} 分`;
+      document.getElementById('comboDisplay').textContent = `${combo} 連擊`;
+      
+      let hearts = '';
+      for (let i = 0; i < 3; i++) {
+        hearts += (i < lives) ? '❤️' : '🤍';
+      }
+      document.getElementById('livesDisplay').textContent = hearts;
+    }
+
+    function endGame(isVictory) {
+      const modal = document.getElementById('resultModal');
+      const title = document.getElementById('modalTitle');
+      const desc = document.getElementById('modalDesc');
+      const icon = document.getElementById('modalIcon');
+      
+      document.getElementById('finalScore').textContent = score;
+      document.getElementById('finalCombo').textContent = `${maxCombo} COMBO`;
+
+      if (isVictory) {
+        playSound('correct');
+        icon.textContent = '🏅';
+        title.textContent = '🎉 恭喜通關！校園心算特優生！';
+        desc.textContent = `太厲害了！你以 ${score} 分獲得了滿滿的星星，完全掌握了小數點向左與向右跳躍的規律！`;
+        if (typeof confetti === 'function') {
+          confetti({ particleCount: 160, spread: 100 });
+        }
+      } else {
+        icon.textContent = '🌱';
+        title.textContent = '愛心用光了，再接再厲！';
+        desc.textContent = '別氣餒！可以先翻翻「口訣筆記本」與「歡樂實驗室」玩玩看，馬上就能完全掌握囉！';
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    function restartGame() {
+      document.getElementById('resultModal').classList.add('hidden');
+      currentQuestionIndex = 0;
+      score = 0;
+      combo = 0;
+      maxCombo = 0;
+      lives = 3;
+      isAnsweringLocked = false;
+      updateStatsUI();
+      loadProblem(createProblem(0));
+    }
+
+    /* =========================================================
+       STREAMING_CHUNK:Operating interactive laboratory features
+       ========================================================= */
+    let sandboxCurrentNumber = "45.8";
+
+    function setSandboxFromInput() {
+      const input = document.getElementById('customNumberInput');
+      let val = input.value.trim();
+      if (!val || isNaN(val)) val = "45.8";
+      sandboxCurrentNumber = val;
+      renderSandboxStage(sandboxCurrentNumber, 0, null);
+      document.getElementById('sandboxExplanation').textContent = `✅ 數值已設定為：${sandboxCurrentNumber}。請點選上方除數按鈕開始跳躍！`;
+      playSound('reset');
+    }
+
+    function runSandboxOperation(divisor) {
+      initAudio();
+      const origin = sandboxCurrentNumber;
+      const data = calculateExpectedShift(origin, divisor);
+      const result = data.resultStr;
+
+      playSound(data.shift < 0 ? 'step-left' : 'step-right');
+
+      const expl = document.getElementById('sandboxExplanation');
+      expl.innerHTML = `
+        <span class="text-amber-800 font-black">${origin} ÷ ${divisor}</span><br>
+        👉 <strong>${data.explanation}</strong><br>
+        🏁 最終計算結果：<span class="text-emerald-700 font-black text-base">${result}</span>
+      `;
+
+      renderSandboxStage(origin, data.shift, divisor);
+      sandboxCurrentNumber = result;
+      document.getElementById('customNumberInput').value = result;
+    }
+
+    function renderSandboxStage(numStr, shift, divisor) {
+      const stage = document.getElementById('sandboxAnimStage');
+      stage.innerHTML = '';
+
+      const wrapper = document.createElement('div');
+      wrapper.className = "flex items-center gap-3";
+
+      const beforeSpan = document.createElement('span');
+      beforeSpan.className = "text-slate-500 font-black";
+      beforeSpan.textContent = numStr;
+      wrapper.appendChild(beforeSpan);
+
+      if (divisor !== null) {
+        const arrow = document.createElement('span');
+        arrow.className = "text-lg text-amber-600 font-bold px-1";
+        arrow.textContent = `÷ ${divisor} ➔`;
+        wrapper.appendChild(arrow);
+
+        const afterSpan = document.createElement('span');
+        afterSpan.className = "text-amber-900 font-black underline decoration-rose-400 underline-offset-8 bg-amber-100 px-3 py-1 rounded-xl border border-amber-300";
+        afterSpan.textContent = applyDecimalShift(numStr, shift);
+        wrapper.appendChild(afterSpan);
+      }
+
+      stage.appendChild(wrapper);
+    }
+
+    /* =========================================================
+       STREAMING_CHUNK:Handling tab transitions and hotkeys
+       ========================================================= */
+    function switchMode(mode) {
+      const challengeView = document.getElementById('challengeView');
+      const sandboxView = document.getElementById('sandboxView');
+      const rulesView = document.getElementById('rulesView');
+
+      const tabC = document.getElementById('tabChallenge');
+      const tabS = document.getElementById('tabSandbox');
+      const tabR = document.getElementById('tabRules');
+
+      [tabC, tabS, tabR].forEach(btn => {
+        btn.className = "px-3.5 py-1.5 rounded-xl transition-all duration-200 text-amber-800 hover:bg-amber-200/70";
+      });
+
+      const activeClass = "px-3.5 py-1.5 rounded-xl transition-all duration-200 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm hover:opacity-95";
+
+      challengeView.classList.add('hidden');
+      sandboxView.classList.add('hidden');
+      rulesView.classList.add('hidden');
+
+      if (mode === 'challenge') {
+        challengeView.classList.remove('hidden');
+        tabC.className = activeClass;
+      } else if (mode === 'sandbox') {
+        sandboxView.classList.remove('hidden');
+        tabS.className = activeClass;
+        setSandboxFromInput();
+      } else if (mode === 'rules') {
+        rulesView.classList.remove('hidden');
+        tabR.className = activeClass;
+      }
+
+      playSound('reset');
+    }
+
+    function toggleHintModal() {
+      const modal = document.getElementById('hintModal');
+      modal.classList.toggle('hidden');
+      playSound('reset');
+    }
+
+    // Keyboard Arrow Controls
+    window.addEventListener('keydown', (e) => {
+      const isModalOpen = !document.getElementById('hintModal').classList.contains('hidden') || 
+                          !document.getElementById('resultModal').classList.contains('hidden');
+      if (isModalOpen) return;
+
+      if (e.key === 'ArrowLeft') {
+        stepDecimal(-1);
+      } else if (e.key === 'ArrowRight') {
+        stepDecimal(1);
+      } else if (e.key === 'Enter') {
+        submitAnswer();
+      } else if (e.key === 'r' || e.key === 'R') {
+        resetCurrentNumber();
+      }
     });
-  }
-}
-const sfx = new SoundFx();
 
-/* ---------------- 分數工具模組 ---------------- */
-class Fraction {
-  constructor(n, d) {
-    if (d === 0) throw new Error("分母不能為零");
-    this.n = n;
-    this.d = d;
-    this.simplify();
-  }
-  static gcd(a, b) {
-    return b === 0 ? Math.abs(a) : Fraction.gcd(b, a % b);
-  }
-  simplify() {
-    const common = Fraction.gcd(this.n, this.d);
-    this.n /= common;
-    this.d /= common;
-    if (this.d < 0) {
-      this.n = -this.n;
-      this.d = -this.d;
-    }
-    return this;
-  }
-  add(f) { return new Fraction(this.n * f.d + f.n * this.d, this.d * f.d); }
-  sub(f) { return new Fraction(this.n * f.d - f.n * this.d, this.d * f.d); }
-  mul(f) { return new Fraction(this.n * f.n, this.d * f.d); }
-  div(f) { return new Fraction(this.n * f.d, this.d * f.n); }
-  val() { return this.n / this.d; }
-  
-  toHTML(allowMixed = true) {
-    if (this.d === 1) return `<span>${this.n}</span>`;
-    if (allowMixed && Math.abs(this.n) > this.d) {
-      const whole = Math.floor(this.n / this.d);
-      const rem = this.n % this.d;
-      if (rem === 0) return `<span>${whole}</span>`;
-      return `<span class="math-mixed"><span class="whole">${whole}</span><span class="math-frac"><span class="math-num">${rem}</span><span class="math-den">${this.d}</span></span></span>`;
-    }
-    return `<span class="math-frac"><span class="math-num">${this.n}</span><span class="math-den">${this.d}</span></span>`;
-  }
-}
-
-/* ---------------- 隨機無限題目生成器 ---------------- */
-let currentQuestion = null;
-
-function generateQuestion() {
-  const templates = [
-    // 類型 1: (A ÷ B) + C
-    () => {
-      const b_den = [2, 3, 4, 5][Math.floor(Math.random() * 4)];
-      const b_num = Math.floor(Math.random() * (b_den - 1)) + 1;
-      const f_b = new Fraction(b_num, b_den); // 除數
-
-      const f_a = new Fraction(Math.floor(Math.random() * 3) + 1, [2, 3, 4][Math.floor(Math.random() * 3)]);
-      const divRes = f_a.div(f_b);
-
-      const f_c = new Fraction(Math.floor(Math.random() * 3) + 1, [2, 3, 4][Math.floor(Math.random() * 3)]);
-      const finalRes = divRes.add(f_c);
-
-      return {
-        html: `${f_a.toHTML()} ÷ ${f_b.toHTML()} + ${f_c.toHTML()}`,
-        result: finalRes,
-        steps: [
-          `先乘除後加減：先計算除法 ${f_a.toHTML()} ÷ ${f_b.toHTML()}`,
-          `除以分數等於乘以倒數：${f_a.toHTML()} × <span class="math-frac"><span class="math-num">${f_b.d}</span><span class="math-den">${f_b.n}</span></span> = ${divRes.toHTML()}`,
-          `進行加法：${divRes.toHTML()} + ${f_c.toHTML()} = <strong>${finalRes.toHTML()}</strong>`
-        ],
-        type: 'pie',
-        valForVisual: f_b.val()
-      };
-    },
-    // 類型 2: A × (B - C) 其中包含帶分數與減法
-    () => {
-      const f_c = new Fraction(1, [3, 4, 5][Math.floor(Math.random() * 3)]);
-      const f_b = new Fraction(f_c.n + [1, 2][Math.floor(Math.random() * 2)], f_c.d); // 確保 B > C
-      const bracketRes = f_b.sub(f_c);
-
-      const f_a = new Fraction(Math.floor(Math.random() * 4) + 2, [2, 3][Math.floor(Math.random() * 2)]);
-      const finalRes = f_a.mul(bracketRes);
-
-      return {
-        html: `${f_a.toHTML()} × (${f_b.toHTML()} - ${f_c.toHTML()})`,
-        result: finalRes,
-        steps: [
-          `括號先算：先計算 (${f_b.toHTML()} - ${f_c.toHTML()}) = ${bracketRes.toHTML()}`,
-          `再計算乘法：${f_a.toHTML()} × ${bracketRes.toHTML()} = <strong>${finalRes.toHTML()}</strong>`
-        ],
-        type: 'line',
-        valForVisual: finalRes.val()
-      };
-    },
-    // 類型 3: A ÷ B ÷ C 連續除法
-    () => {
-      const f_a = new Fraction(Math.floor(Math.random() * 3) + 2, 1);
-      const f_b = new Fraction(Math.floor(Math.random() * 2) + 2, 1);
-      const f_c = new Fraction(2, 3);
-      const step1 = f_a.div(f_b);
-      const finalRes = step1.div(f_c);
-
-      return {
-        html: `${f_a.toHTML()} ÷ ${f_b.toHTML()} ÷ ${f_c.toHTML()}`,
-        result: finalRes,
-        steps: [
-          `由左至右依序除算：${f_a.toHTML()} ÷ ${f_b.toHTML()} = ${step1.toHTML()}`,
-          `再除以 ${f_c.toHTML()}：${step1.toHTML()} × <span class="math-frac"><span class="math-num">3</span><span class="math-den">2</span></span> = <strong>${finalRes.toHTML()}</strong>`
-        ],
-        type: 'pie',
-        valForVisual: 2/3
-      };
-    }
-  ];
-
-  const q = templates[Math.floor(Math.random() * templates.length)]();
-  
-  // 決定歸類區間
-  const val = q.result.val();
-  if (val < 1) {
-    q.category = 'less_one';
-  } else if (val <= 2) {
-    q.category = 'one_to_two';
-  } else {
-    q.category = 'greater_two';
-  }
-
-  return q;
-}
-
-/* ---------------- 繪圖輔助 (圓餅圖與數線圖) ---------------- */
-function renderVisual(container, type, val) {
-  container.innerHTML = '';
-  const canvas = document.createElement('canvas');
-  const size = 64;
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext('2d');
-
-  if (type === 'pie') {
-    // 繪製圓餅比例圖
-    ctx.beginPath();
-    ctx.arc(size/2, size/2, 26, 0, 2 * Math.PI);
-    ctx.fillStyle = '#fce4ec';
-    ctx.fill();
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = '#ff7597';
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(size/2, size/2);
-    ctx.arc(size/2, size/2, 26, -Math.PI/2, -Math.PI/2 + (2 * Math.PI * Math.min(val, 1)));
-    ctx.closePath();
-    ctx.fillStyle = '#ff7597';
-    ctx.fill();
-  } else {
-    // 繪製數線標記
-    canvas.width = 120;
-    ctx.strokeStyle = '#a0e7e5';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(10, 32);
-    ctx.lineTo(110, 32);
-    ctx.stroke();
-
-    // 刻度 0, 1, 2, 3
-    for (let i = 0; i <= 3; i++) {
-      const x = 10 + (i / 3) * 100;
-      ctx.beginPath();
-      ctx.moveTo(x, 26);
-      ctx.lineTo(x, 38);
-      ctx.strokeStyle = '#ff7597';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-    // 標記點
-    const markX = Math.min(Math.max(10 + (val / 3) * 100, 10), 110);
-    ctx.beginPath();
-    ctx.arc(markX, 32, 6, 0, 2 * Math.PI);
-    ctx.fillStyle = '#d84a75';
-    ctx.fill();
-  }
-  container.appendChild(canvas);
-}
-
-/* ---------------- 遊戲核心邏輯 ---------------- */
-let score = 0;
-let combo = 0;
-let timeLeft = 60;
-let timerId = null;
-let isGameOver = false;
-
-function initGame() {
-  score = 0;
-  combo = 0;
-  timeLeft = 60;
-  isGameOver = false;
-  document.getElementById('score').innerText = score;
-  document.getElementById('combo').innerText = combo;
-  document.getElementById('timer').innerText = timeLeft;
-
-  clearInterval(timerId);
-  timerId = setInterval(() => {
-    timeLeft--;
-    document.getElementById('timer').innerText = timeLeft;
-    if (timeLeft <= 0) {
-      endGame();
-    }
-  }, 1000);
-
-  nextRound();
-}
-
-function nextRound() {
-  currentQuestion = generateQuestion();
-  document.getElementById('card-expr').innerHTML = currentQuestion.html;
-  renderVisual(document.getElementById('card-visual'), currentQuestion.type, currentQuestion.valForVisual);
-  
-  // 重設卡片位置
-  const card = document.getElementById('active-card');
-  card.style.transform = 'translate(0px, 0px)';
-}
-
-function handleAnswer(selectedCategory) {
-  if (isGameOver) return;
-
-  if (selectedCategory === currentQuestion.category) {
-    // 答對
-    sfx.playCorrect();
-    triggerConfetti();
-    combo++;
-    score += 100 + (combo > 1 ? (combo - 1) * 20 : 0);
-    document.getElementById('score').innerText = score;
-    document.getElementById('combo').innerText = combo;
-    nextRound();
-  } else {
-    // 答錯
-    sfx.playWrong();
-    combo = 0;
-    document.getElementById('combo').innerText = combo;
-    showHint(currentQuestion);
-  }
-}
-
-function showHint(q) {
-  const container = document.getElementById('hint-content');
-  container.innerHTML = q.steps.map(step => `<div class="hint-step">${step}</div>`).join('');
-  document.getElementById('hint-overlay').style.display = 'flex';
-}
-
-function closeHint() {
-  document.getElementById('hint-overlay').style.display = 'none';
-  nextRound();
-}
-
-function endGame() {
-  clearInterval(timerId);
-  isGameOver = true;
-  sfx.playWin();
-
-  document.getElementById('final-score').innerText = score;
-  const starsElem = document.getElementById('star-rating');
-  const feedbackElem = document.getElementById('feedback-text');
-
-  if (score >= 1000) {
-    starsElem.innerText = '⭐⭐⭐';
-    feedbackElem.innerText = '太神了！你是全宇宙最強的分數四則運算大師！';
-  } else if (score >= 500) {
-    starsElem.innerText = '⭐⭐☆';
-    feedbackElem.innerText = '很棒的表現！乘除互換概念掌握得相當熟練！';
-  } else {
-    starsElem.innerText = '⭐☆☆';
-    feedbackElem.innerText = '加油！多練習倒數與括號先算的順序會更棒！';
-  }
-
-  document.getElementById('result-overlay').style.display = 'flex';
-}
-
-function restartGame() {
-  document.getElementById('result-overlay').style.display = 'none';
-  initGame();
-}
-
-/* ---------------- 平板觸控與滑鼠拖曳核心 ---------------- */
-const card = document.getElementById('active-card');
-let isDragging = false;
-let startX = 0, startY = 0;
-let currentX = 0, currentY = 0;
-
-function onStart(clientX, clientY) {
-  if (isGameOver) return;
-  isDragging = true;
-  startX = clientX - currentX;
-  startY = clientY - currentY;
-  card.style.transition = 'none';
-}
-
-function onMove(clientX, clientY) {
-  if (!isDragging) return;
-  currentX = clientX - startX;
-  currentY = clientY - startY;
-  card.style.transform = `translate(${currentX}px, ${currentY}px)`;
-
-  // 偵測是否懸浮於收集箱上方
-  checkHoverBin(clientX, clientY);
-}
-
-function onEnd() {
-  if (!isDragging) return;
-  isDragging = false;
-  card.style.transition = 'transform 0.2s ease';
-
-  // 檢查是否放置到收集艙內
-  const cardRect = card.getBoundingClientRect();
-  const centerX = cardRect.left + cardRect.width / 2;
-  const centerY = cardRect.top + cardRect.height / 2;
-
-  let matchedCategory = null;
-  const bins = document.querySelectorAll('.drop-bin');
-  bins.forEach(bin => {
-    const rect = bin.getBoundingClientRect();
-    if (centerX >= rect.left && centerX <= rect.right &&
-        centerY >= rect.top && centerY <= rect.bottom) {
-      matchedCategory = bin.getAttribute('data-type');
-    }
-    bin.classList.remove('hovered');
-  });
-
-  currentX = 0;
-  currentY = 0;
-  card.style.transform = 'translate(0px, 0px)';
-
-  if (matchedCategory) {
-    handleAnswer(matchedCategory);
-  }
-}
-
-function checkHoverBin(x, y) {
-  const bins = document.querySelectorAll('.drop-bin');
-  bins.forEach(bin => {
-    const rect = bin.getBoundingClientRect();
-    if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-      bin.classList.add('hovered');
-    } else {
-      bin.classList.remove('hovered');
-    }
-  });
-}
-
-// 觸控事件監聽
-card.addEventListener('touchstart', (e) => {
-  const touch = e.touches[0];
-  onStart(touch.clientX, touch.clientY);
-}, { passive: false });
-
-window.addEventListener('touchmove', (e) => {
-  if (isDragging) {
-    const touch = e.touches[0];
-    onMove(touch.clientX, touch.clientY);
-    e.preventDefault();
-  }
-}, { passive: false });
-
-window.addEventListener('touchend', onEnd);
-
-// 滑鼠事件監聽
-card.addEventListener('mousedown', (e) => {
-  onStart(e.clientX, e.clientY);
-});
-window.addEventListener('mousemove', (e) => {
-  onMove(e.clientX, e.clientY);
-});
-window.addEventListener('mouseup', onEnd);
-
-/* ---------------- 彩帶粒子特效 (Confetti) ---------------- */
-const confettiCanvas = document.getElementById('confetti-canvas');
-const confCtx = confettiCanvas.getContext('2d');
-let particles = [];
-
-function resizeConfetti() {
-  confettiCanvas.width = window.innerWidth;
-  confettiCanvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resizeConfetti);
-resizeConfetti();
-
-function triggerConfetti() {
-  const colors = ['#ff7597', '#a0e7e5', '#fff3b0', '#bca0dc', '#bbf2c8'];
-  for (let i = 0; i < 40; i++) {
-    particles.push({
-      x: window.innerWidth / 2,
-      y: window.innerHeight / 2,
-      vx: (Math.random() - 0.5) * 12,
-      vy: (Math.random() - 0.7) * 14,
-      size: Math.random() * 8 + 4,
-      color: colors[Math.floor(Math.random() * colors.length)],
-      rotation: Math.random() * 360,
-      vRot: (Math.random() - 0.5) * 10,
-      alpha: 1
-    });
-  }
-}
-
-function updateConfetti() {
-  confCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-  particles.forEach((p, idx) => {
-    p.x += p.vx;
-    p.y += p.vy;
-    p.vy += 0.35; // 重力
-    p.rotation += p.vRot;
-    p.alpha -= 0.015;
-
-    confCtx.save();
-    confCtx.globalAlpha = Math.max(p.alpha, 0);
-    confCtx.translate(p.x, p.y);
-    confCtx.rotate((p.rotation * Math.PI) / 180);
-    confCtx.fillStyle = p.color;
-    confCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
-    confCtx.restore();
-
-    if (p.alpha <= 0) particles.splice(idx, 1);
-  });
-  requestAnimationFrame(updateConfetti);
-}
-updateConfetti();
-
-// 啟動遊戲
-window.onload = () => {
-  initGame();
-};
-</script>
+    // Window Onload Initialization
+    window.onload = function () {
+      updateStatsUI();
+      loadProblem(createProblem(0));
+      setSandboxFromInput();
+    };
+  </script>
 </body>
 </html>
