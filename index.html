@@ -103,9 +103,21 @@
         </button>
       </div>
 
-      <!-- 3-Minute Battle Timer & Function Buttons -->
-      <div class="flex items-center gap-2">
-        <div id="timerContainer" class="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-rose-50 border-2 border-rose-300 shadow-sm">
+      <!-- Customizable Battle Timer & Function Buttons -->
+      <div class="flex items-center gap-1.5 sm:gap-2">
+        <!-- Time Limit Selector Dropdown -->
+        <div class="flex items-center gap-1 bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 rounded-2xl px-2 py-1 shadow-sm transition">
+          <span class="text-xs">⏱️</span>
+          <select id="timeSelect" onchange="changeTimeLimit(parseInt(this.value))" class="bg-transparent text-xs sm:text-sm font-black text-amber-900 focus:outline-none cursor-pointer">
+            <option value="60">1 分鐘</option>
+            <option value="120">2 分鐘</option>
+            <option value="180" selected>3 分鐘</option>
+            <option value="300">5 分鐘</option>
+            <option value="600">10 分鐘</option>
+          </select>
+        </div>
+
+        <div id="timerContainer" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-2xl bg-rose-50 border-2 border-rose-300 shadow-sm">
           <span class="text-rose-500 text-sm animate-pulse">⏳</span>
           <span id="timerText" class="font-mono-num font-black text-rose-600 text-sm sm:text-base">03:00</span>
         </div>
@@ -337,7 +349,7 @@
 
     <!-- 1-PLAYER SOLO EXPANDED VIEW BANNER (Only in 1P mode) -->
     <div id="soloGuidanceBanner" class="hidden mt-3 bg-amber-50 border-2 border-amber-300 rounded-2xl p-3 text-center text-xs font-bold text-amber-900 shadow-sm">
-      🎯 【單人闖關模式】：3 分鐘內盡全力跳滿 10 步登上領獎台！如果答錯青蛙會滑落 1 步喔！
+      🎯 【單人闖關模式】：<span id="soloTimeText">3</span> 分鐘內盡全力跳滿 10 步登上領獎台！如果答錯青蛙會滑落 1 步喔！
     </div>
   </main>
 
@@ -495,11 +507,16 @@
     }
 
     const MAX_STEPS = 10;
-    const MATCH_DURATION = 180; // 3 minutes = 180s
-    let timeLeft = MATCH_DURATION;
+    let matchDuration = 180; // default 3 minutes (180s)
+    let timeLeft = matchDuration;
     let timerInterval = null;
     let gameMode = '2P'; // '2P' or '1P'
     let isGameOver = false;
+
+    function changeTimeLimit(seconds) {
+      matchDuration = seconds;
+      restartMatch();
+    }
 
     // Track steps & scores
     let p1Steps = 0, p1Score = 0, p1Combo = 0;
@@ -919,7 +936,7 @@
 
     function startTimer() {
       clearInterval(timerInterval);
-      timeLeft = MATCH_DURATION;
+      timeLeft = matchDuration;
       updateTimerDisplay();
 
       timerInterval = setInterval(() => {
@@ -951,6 +968,7 @@
       const title = document.getElementById('resTitle');
       const desc = document.getElementById('resDesc');
       const icon = document.getElementById('resIcon');
+      const currentMinutes = Math.round(matchDuration / 60);
 
       document.getElementById('resP1Steps').textContent = `${p1Steps} 步`;
       document.getElementById('resP1Score').textContent = `${p1Score} 分`;
@@ -969,7 +987,7 @@
         } else {
           icon.textContent = '⏰';
           title.textContent = '時間到！再接再厲！';
-          desc.textContent = `你在 3 分鐘內完成了 ${p1Steps} 步跳躍，得到了 ${p1Score} 分，下次一定能登頂！`;
+          desc.textContent = `你在 ${currentMinutes} 分鐘內完成了 ${p1Steps} 步跳躍，得到了 ${p1Score} 分，下次一定能登頂！`;
         }
       } else {
         // 2P comparison
@@ -986,15 +1004,15 @@
           if (p1Steps > p2Steps) {
             icon.textContent = '🏆';
             title.textContent = '🟢 綠跳跳隊 依前進步數獲勝！';
-            desc.textContent = `3分鐘時間到！綠跳跳以 ${p1Steps} 步領先藍跳跳的 ${p2Steps} 步！`;
+            desc.textContent = `${currentMinutes} 分鐘時間到！綠跳跳以 ${p1Steps} 步領先藍跳跳的 ${p2Steps} 步！`;
           } else if (p2Steps > p1Steps) {
             icon.textContent = '🏆';
             title.textContent = '🔵 藍跳跳隊 依前進步數獲勝！';
-            desc.textContent = `3分鐘時間到！藍跳跳以 ${p2Steps} 步領先綠跳跳的 ${p1Steps} 步！`;
+            desc.textContent = `${currentMinutes} 分鐘時間到！藍跳跳以 ${p2Steps} 步領先綠跳跳的 ${p1Steps} 步！`;
           } else {
             icon.textContent = '🤝';
             title.textContent = '平分秋色！雙蛙並列冠軍！';
-            desc.textContent = `3分鐘時間到！兩隊均前進了 ${p1Steps} 步，實力旗鼓相當！`;
+            desc.textContent = `${currentMinutes} 分鐘時間到！兩隊均前進了 ${p1Steps} 步，實力旗鼓相當！`;
           }
         }
       }
@@ -1012,6 +1030,10 @@
       document.getElementById('p1Combo').textContent = '0';
       document.getElementById('p2Score').textContent = '0';
       document.getElementById('p2Combo').textContent = '0';
+
+      const minText = Math.round(matchDuration / 60);
+      const soloBannerTime = document.getElementById('soloTimeText');
+      if (soloBannerTime) soloBannerTime.textContent = minText;
 
       renderPondTracks();
       generateP1Question();
